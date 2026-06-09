@@ -23,6 +23,7 @@ import com.ryuzora.dangani.domain.repository.TaskRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
@@ -195,8 +196,11 @@ class TaskRepositoryImpl(
                 }
             } catch (_: Exception) { }
         }
-        return taskApplicationDao.getByTaskId(taskId).map { entities ->
-            entities.map { entity ->
+        return taskApplicationDao.getByTaskId(taskId)
+            .distinctUntilChanged()
+            .map { entities ->
+            // Filter only pending applications to avoid showing accepted ones
+            entities.filter { it.status == "pending" }.distinctBy { it.helperId }.map { entity ->
                 TaskApplication(
                     id = entity.id,
                     taskId = entity.taskId,

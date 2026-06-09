@@ -42,7 +42,8 @@ fun HelperCard(
     application: TaskApplication,
     onViewProfile: () -> Unit,
     onAcceptHelper: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isAccepted: Boolean = false
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -162,12 +163,13 @@ fun HelperCard(
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = DanganiBlue,
+                        containerColor = if (isAccepted) Color.Gray else DanganiBlue,
                         contentColor = TextOnPrimary
-                    )
+                    ),
+                    enabled = !isAccepted
                 ) {
                     Text(
-                        text = "Terima Helper",
+                        text = if (isAccepted) "Diterima" else "Terima Helper",
                         style = MaterialTheme.typography.labelMedium
                     )
                 }

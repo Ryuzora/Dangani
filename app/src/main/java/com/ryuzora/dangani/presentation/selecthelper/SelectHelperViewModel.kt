@@ -23,7 +23,8 @@ data class SelectHelperUiState(
     val task: Task? = null,
     val applicants: List<TaskApplication> = emptyList(),
     val isLoading: Boolean = true,
-    val error: String? = null
+    val error: String? = null,
+    val acceptedHelperId: String? = null
 )
 
 class SelectHelperViewModel(private val taskId: String) : ViewModel() {
@@ -72,8 +73,7 @@ class SelectHelperViewModel(private val taskId: String) : ViewModel() {
             _uiState.update { it.copy(isLoading = true, error = null) }
             acceptHelperUseCase(taskId, helperId)
                 .onSuccess {
-                    // Task will be updated via flow, navigate back handled by screen
-                    _uiState.update { it.copy(isLoading = false) }
+                    _uiState.update { it.copy(isLoading = false, acceptedHelperId = helperId) }
                 }
                 .onFailure { e ->
                     _uiState.update { it.copy(isLoading = false, error = e.message ?: "Gagal menerima helper") }

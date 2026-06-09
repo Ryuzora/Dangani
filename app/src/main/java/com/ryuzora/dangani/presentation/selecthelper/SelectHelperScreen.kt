@@ -188,7 +188,8 @@ fun SelectHelperScreen(
                             HelperCard(
                                 application = application,
                                 onViewProfile = { onNavigateToProfile(application.helperId) },
-                                onAcceptHelper = { viewModel.acceptHelper(application.helperId) }
+                                onAcceptHelper = { viewModel.acceptHelper(application.helperId) },
+                                isAccepted = uiState.acceptedHelperId == application.helperId
                             )
                         }
                     }

@@ -103,6 +103,8 @@ fun DanganiNavGraph(
                 onNavigateToEditTask = {
                     navController.navigate(Screen.EditTask.createRoute(taskId))
                 }
+                    ,
+                    onNavigateToWorkSubmission = { id -> navController.navigate(Screen.WorkSubmission.createRoute(id)) }
             )
         }
 

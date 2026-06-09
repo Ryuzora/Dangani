@@ -26,6 +26,7 @@ data class TaskDetailUiState(
     val requester: User? = null,
     val hasApplied: Boolean = false,
     val isCurrentUserRequester: Boolean = false,
+    val isCurrentUserHelper: Boolean = false,
     val isLoading: Boolean = true,
     val error: String? = null
 )
@@ -59,11 +60,13 @@ class TaskDetailViewModel(private val taskId: String) : ViewModel() {
                 if (task != null) {
                     val currentUserId = firebaseAuth.getCurrentUserId()
                     val isRequester = currentUserId == task.requesterId
+                    val isHelper = currentUserId == task.helperId
 
                     _uiState.update {
                         it.copy(
                             task = task,
                             isCurrentUserRequester = isRequester,
+                            isCurrentUserHelper = isHelper,
                             isLoading = false
                         )
                     }

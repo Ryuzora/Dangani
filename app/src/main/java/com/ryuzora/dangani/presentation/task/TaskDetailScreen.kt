@@ -61,6 +61,7 @@ fun TaskDetailScreen(
     onNavigateBack: () -> Unit,
     onNavigateToProfile: (String) -> Unit,
     onNavigateToEditTask: (String) -> Unit,
+    onNavigateToWorkSubmission: (String) -> Unit,
     viewModel: TaskDetailViewModel = remember { TaskDetailViewModel(taskId) }
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -309,6 +310,14 @@ fun TaskDetailScreen(
                             onClick = { onNavigateToEditTask(taskId) },
                             variant = ButtonVariant.PRIMARY,
                             icon = Icons.Filled.Edit
+                        )
+                    } else if (uiState.isCurrentUserHelper && task.status == com.ryuzora.dangani.domain.model.TaskStatus.IN_PROGRESS) {
+                        // If current user is the assigned helper and task is in progress, show submit work
+                        DanganiButton(
+                            text = "Submit Work",
+                            onClick = { onNavigateToWorkSubmission(taskId) },
+                            variant = ButtonVariant.PRIMARY,
+                            icon = Icons.Filled.Check
                         )
                     } else {
                         DanganiButton(

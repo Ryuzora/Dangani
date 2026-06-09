@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
 
 data class HomeUiState(
     val tasks: List<Task> = emptyList(),
-    val categories: List<TaskCategory> = listOf(TaskCategory.ALL) + TaskCategory.entries.filter { it != TaskCategory.ALL },
+    val categories: List<TaskCategory> = TaskCategory.getCategoriesWithAll(),
     val selectedCategory: TaskCategory? = null,
     val searchQuery: String = "",
     val searchHistory: List<String> = emptyList(),

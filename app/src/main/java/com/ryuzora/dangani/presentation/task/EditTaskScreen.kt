@@ -194,7 +194,7 @@ fun EditTaskScreen(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    val selectableCategories = TaskCategory.entries.filter { it != TaskCategory.ALL }
+                    val selectableCategories = TaskCategory.getSelectableCategories()
 
                     ExposedDropdownMenuBox(
                         expanded = uiState.isCategoryDropdownExpanded && uiState.isEditable,
