@@ -7,11 +7,22 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import com.google.firebase.auth.FirebaseAuth
+import com.ryuzora.dangani.data.local.DanganiDatabase
+import com.ryuzora.dangani.data.remote.FirebaseAuthService
+import com.ryuzora.dangani.data.remote.FirestoreService
+import com.ryuzora.dangani.data.remote.FirebaseStorageService
+import com.ryuzora.dangani.data.repository.NotificationRepositoryImpl
+import com.ryuzora.dangani.presentation.navigation.BottomNavBar
+import com.ryuzora.dangani.presentation.navigation.DanganiNavGraph
+import com.ryuzora.dangani.presentation.navigation.Screen
 import com.ryuzora.dangani.ui.theme.DanganiTheme
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -19,27 +30,79 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             DanganiTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android", modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                DanganiApp()
             }
         }
     }
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!", modifier = modifier
-    )
-}
+fun DanganiApp() {
+    val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    DanganiTheme {
-        Greeting("Android")
+    // Determine start destination based on Firebase Auth state
+    val isLoggedIn = FirebaseAuth.getInstance().currentUser != null
+    val startDestination = if (isLoggedIn) Screen.Home.route else Screen.Login.route
+
+    // Screens where bottom nav should be visible
+    val bottomNavScreens = listOf(
+        Screen.Home.route,
+        Screen.MyTasks.route,
+        Screen.Notifications.route,
+        Screen.Profile.route
+    )
+    val showBottomNav = currentRoute in bottomNavScreens
+
+    // Notification unread count
+    var notificationCount by remember { mutableIntStateOf(0) }
+
+    // Load unread notification count
+    LaunchedEffect(isLoggedIn) {
+        if (isLoggedIn) {
+            val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return@LaunchedEffect
+            val db = DanganiApplication.instance.database
+            val firestoreService = FirestoreService()
+            val notifRepo = NotificationRepositoryImpl(db.notificationDao(), firestoreService)
+
+            launch {
+                notifRepo.getUnreadCount(userId, "requester").collectLatest { requesterCount ->
+                    notifRepo.getUnreadCount(userId, "helper").collectLatest { helperCount ->
+                        notificationCount = requesterCount + helperCount
+                    }
+                }
+            }
+        }
+    }
+
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        bottomBar = {
+            if (showBottomNav) {
+                BottomNavBar(
+                    currentRoute = currentRoute,
+                    notificationCount = notificationCount,
+                    onNavigate = { route ->
+                        navController.navigate(route) {
+                            // Pop up to Home to avoid building up a large stack
+                            popUpTo(Screen.Home.route) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                )
+            }
+        }
+    ) { innerPadding ->
+        DanganiNavGraph(
+            navController = navController,
+            startDestination = startDestination,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        )
     }
 }
