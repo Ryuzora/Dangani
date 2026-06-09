@@ -111,7 +111,7 @@ fun NotificationItem(
                             contentScale = ContentScale.Crop
                         )
                     } else {
-                        AvatarPlaceholder(size = 40.dp)
+                        AvatarPlaceholder(name = notification.senderName, size = 40.dp)
                     }
                 }
 

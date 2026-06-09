@@ -70,7 +70,7 @@ fun HelperCard(
                             contentScale = ContentScale.Crop
                         )
                     } else {
-                        AvatarPlaceholder(size = 64.dp)
+                        AvatarPlaceholder(name = application.helperName, size = 64.dp)
                     }
                     // Green online dot
                     Box(

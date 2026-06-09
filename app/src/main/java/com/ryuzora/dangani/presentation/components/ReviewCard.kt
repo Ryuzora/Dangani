@@ -58,7 +58,7 @@ fun ReviewCard(
                         contentScale = ContentScale.Crop
                     )
                 } else {
-                    AvatarPlaceholder(size = 36.dp)
+                    AvatarPlaceholder(name = review.reviewerName, size = 36.dp)
                 }
 
                 Column {

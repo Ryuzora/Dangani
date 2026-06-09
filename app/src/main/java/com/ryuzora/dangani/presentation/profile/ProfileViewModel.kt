@@ -25,7 +25,6 @@ data class ProfileUiState(
     val user: User? = null,
     val reviews: List<Review> = emptyList(),
     val isLoading: Boolean = true,
-    val isUploadingPhoto: Boolean = false,
     val isLoggedOut: Boolean = false,
     val error: String? = null
 )
@@ -83,26 +82,6 @@ class ProfileViewModel(
         }
     }
 
-    fun uploadPhoto(imageUri: String) {
-        val userId = currentUserId ?: return
-        if (!isOwnProfile) return
-
-        viewModelScope.launch {
-            _uiState.update { it.copy(isUploadingPhoto = true, error = null) }
-            uploadProfilePhotoUseCase(userId, imageUri)
-                .onSuccess {
-                    _uiState.update { it.copy(isUploadingPhoto = false) }
-                }
-                .onFailure { e ->
-                    _uiState.update {
-                        it.copy(
-                            isUploadingPhoto = false,
-                            error = e.message ?: "Gagal mengunggah foto"
-                        )
-                    }
-                }
-        }
-    }
 
     fun logout() {
         viewModelScope.launch {

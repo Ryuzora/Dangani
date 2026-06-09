@@ -44,6 +44,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -71,6 +72,7 @@ fun EditTaskScreen(
     viewModel: EditTaskViewModel = remember { EditTaskViewModel(taskId) }
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
     LaunchedEffect(uiState.isDeleted, uiState.isSaved) {
         if (uiState.isDeleted || uiState.isSaved) {
@@ -373,29 +375,51 @@ fun EditTaskScreen(
                             colors = CardDefaults.cardColors(containerColor = DanganiLightBlue.copy(alpha = 0.3f)),
                             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                         ) {
-                            Row(
+                            Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    .padding(16.dp)
                             ) {
-                                Icon(
-                                    imageVector = Icons.Outlined.InsertDriveFile,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(28.dp),
-                                    tint = DanganiBlue
-                                )
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = "Bukti pengerjaan dikirim",
-                                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
-                                        color = DanganiBlue
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.InsertDriveFile,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(28.dp),
+                                        tint = DanganiBlue
                                     )
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = "Bukti pengerjaan dikirim",
+                                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                                            color = DanganiBlue
+                                        )
+                                        Text(
+                                            text = task.updatedTimeAgo,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = TextSecondary
+                                        )
+                                    }
+                                }
+
+                                // Show the Google Drive link
+                                if (task.proofOfWorkUrl.isNotBlank()) {
+                                    Spacer(modifier = Modifier.height(10.dp))
                                     Text(
-                                        text = task.updatedTimeAgo,
+                                        text = task.proofOfWorkUrl,
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = TextSecondary
+                                        color = DanganiBlue,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.clickable {
+                                            val intent = android.content.Intent(
+                                                android.content.Intent.ACTION_VIEW,
+                                                android.net.Uri.parse(task.proofOfWorkUrl)
+                                            )
+                                            context.startActivity(intent)
+                                        }
                                     )
                                 }
                             }

@@ -97,7 +97,7 @@ fun TaskCard(
                             contentScale = ContentScale.Crop
                         )
                     } else {
-                        AvatarPlaceholder(size = 28.dp)
+                        AvatarPlaceholder(name = task.requesterName, size = 28.dp)
                     }
 
                     // Username

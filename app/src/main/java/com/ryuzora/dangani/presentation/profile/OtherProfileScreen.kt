@@ -146,7 +146,7 @@ fun OtherProfileScreen(
                                     contentScale = ContentScale.Crop
                                 )
                             } else {
-                                AvatarPlaceholder(size = 100.dp)
+                                AvatarPlaceholder(name = user?.username ?: "?", size = 100.dp)
                             }
                         }
 

@@ -115,7 +115,7 @@ fun MyTaskCard(
                                 contentScale = ContentScale.Crop
                             )
                         } else {
-                            AvatarPlaceholder(size = 24.dp)
+                            AvatarPlaceholder(name = name, size = 24.dp)
                         }
 
                         Column {

@@ -336,14 +336,10 @@ class TaskRepositoryImpl(
 
     // --- Submissions ---
 
-    override suspend fun submitWork(taskId: String, fileUri: String): Result<String> {
+    override suspend fun submitWork(taskId: String, driveLink: String): Result<String> {
         return try {
-            val path = "proof_of_work/$taskId/${System.currentTimeMillis()}"
-            val uploadResult = storageService.uploadFile(path, Uri.parse(fileUri))
-            val downloadUrl = uploadResult.getOrThrow()
-
             val updates = mapOf(
-                "proofOfWorkUrl" to downloadUrl,
+                "proofOfWorkUrl" to driveLink,
                 "status" to TaskStatus.NEED_REVIEW.name,
                 "updatedAt" to System.currentTimeMillis()
             )
@@ -371,7 +367,7 @@ class TaskRepositoryImpl(
                 notificationRepository.createNotification(notification)
             }
 
-            Result.success(downloadUrl)
+            Result.success(driveLink)
         } catch (e: Exception) {
             Result.failure(e)
         }
