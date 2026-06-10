@@ -60,6 +60,10 @@ import com.ryuzora.dangani.presentation.components.DanganiButton
 import com.ryuzora.dangani.presentation.components.ProfileStatsCard
 import com.ryuzora.dangani.presentation.components.ReviewCard
 import com.ryuzora.dangani.presentation.components.VerifiedBadge
+import android.content.Intent
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import com.ryuzora.dangani.R
 import com.ryuzora.dangani.ui.theme.BackgroundGray
 import com.ryuzora.dangani.ui.theme.CardWhite
 import com.ryuzora.dangani.ui.theme.DanganiBlue
@@ -77,6 +81,7 @@ fun ProfileScreen(
     viewModel: ProfileViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
     // Photo picker launcher
     val photoPickerLauncher = rememberLauncherForActivityResult(
@@ -227,6 +232,16 @@ fun ProfileScreen(
                             text = user?.email ?: "",
                             style = MaterialTheme.typography.bodyMedium,
                             color = TextSecondary
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        WhatsAppIconButton(
+                            whatsappNumber = user?.whatsapp,
+                            onClick = { url ->
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                context.startActivity(intent)
+                            }
                         )
 
                         Spacer(modifier = Modifier.height(20.dp))
@@ -401,5 +416,42 @@ fun ProfileScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun WhatsAppIconButton(
+    whatsappNumber: String?,
+    onClick: (String) -> Unit
+) {
+    val cleanedNumber = whatsappNumber
+        ?.replace("+", "")
+        ?.replace(" ", "")
+        ?.replace("-", "")
+        .orEmpty()
+
+    val whatsappUrl = if (cleanedNumber.isNotBlank()) {
+        "https://wa.me/$cleanedNumber"
+    } else {
+        "https://wa.me/"
+    }
+
+    Box(
+        modifier = Modifier
+            .size(44.dp)
+            .border(
+                width = 1.dp,
+                color = androidx.compose.ui.graphics.Color(0xFF25D366),
+                shape = CircleShape
+            )
+            .clickable { onClick(whatsappUrl) },
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.ic_whatsapp),
+            contentDescription = "WhatsApp",
+            modifier = Modifier.size(24.dp),
+            tint = androidx.compose.ui.graphics.Color.Unspecified
+        )
     }
 }

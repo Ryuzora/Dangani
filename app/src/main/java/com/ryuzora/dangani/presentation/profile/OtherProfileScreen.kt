@@ -53,6 +53,7 @@ import com.ryuzora.dangani.presentation.components.AvatarPlaceholder
 import com.ryuzora.dangani.presentation.components.ProfileStatsCard
 import com.ryuzora.dangani.presentation.components.ReviewCard
 import com.ryuzora.dangani.presentation.components.VerifiedBadge
+import com.ryuzora.dangani.R
 import com.ryuzora.dangani.ui.theme.BackgroundGray
 import com.ryuzora.dangani.ui.theme.DanganiBlue
 import com.ryuzora.dangani.ui.theme.DividerColor
@@ -178,45 +179,34 @@ fun OtherProfileScreen(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Social links
-                        val hasWhatsapp = user?.whatsapp?.isNotBlank() == true
+// Social links
                         val hasInstagram = user?.instagram?.isNotBlank() == true
 
-                        if (hasWhatsapp || hasInstagram) {
-                            Row(
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                if (hasWhatsapp) {
-                                    SocialLinkButton(
-                                        label = "WhatsApp",
-                                        color = androidx.compose.ui.graphics.Color(0xFF4CAF50),
-                                        onClick = {
-                                            val waNumber = user?.whatsapp?.replace("+", "")?.replace(" ", "") ?: ""
-                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://wa.me/$waNumber"))
-                                            context.startActivity(intent)
-                                        }
-                                    )
+                        Row(
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            WhatsAppIconButton(
+                                whatsappNumber = user?.whatsapp,
+                                onClick = { url ->
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                    context.startActivity(intent)
                                 }
+                            )
 
-                                if (hasWhatsapp && hasInstagram) {
-                                    Spacer(modifier = Modifier.width(16.dp))
-                                }
+                            if (hasInstagram) {
+                                Spacer(modifier = Modifier.width(16.dp))
 
-                                if (hasInstagram) {
-                                    SocialLinkButton(
-                                        label = "Instagram",
-                                        color = DanganiBlue,
-                                        onClick = {
-                                            val igHandle = user?.instagram?.removePrefix("@") ?: ""
-                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://instagram.com/$igHandle"))
-                                            context.startActivity(intent)
-                                        }
-                                    )
-                                }
+                                SocialLinkButton(
+                                    label = "Instagram",
+                                    color = DanganiBlue,
+                                    onClick = {
+                                        val igHandle = user?.instagram?.removePrefix("@") ?: ""
+                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://instagram.com/$igHandle"))
+                                        context.startActivity(intent)
+                                    }
+                                )
                             }
-
-                            Spacer(modifier = Modifier.height(4.dp))
                         }
 
                         Spacer(modifier = Modifier.height(20.dp))
@@ -377,6 +367,43 @@ private fun SocialLinkButton(
                 fontWeight = FontWeight.Medium
             ),
             color = color
+        )
+    }
+}
+
+@Composable
+private fun WhatsAppIconButton(
+    whatsappNumber: String?,
+    onClick: (String) -> Unit
+) {
+    val cleanedNumber = whatsappNumber
+        ?.replace("+", "")
+        ?.replace(" ", "")
+        ?.replace("-", "")
+        .orEmpty()
+
+    val whatsappUrl = if (cleanedNumber.isNotBlank()) {
+        "https://wa.me/$cleanedNumber"
+    } else {
+        "https://wa.me/"
+    }
+
+    Box(
+        modifier = Modifier
+            .size(44.dp)
+            .border(
+                width = 1.dp,
+                color = androidx.compose.ui.graphics.Color(0xFF25D366),
+                shape = CircleShape
+            )
+            .clickable { onClick(whatsappUrl) },
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.ic_whatsapp),
+            contentDescription = "WhatsApp",
+            modifier = Modifier.size(24.dp),
+            tint = androidx.compose.ui.graphics.Color.Unspecified
         )
     }
 }
