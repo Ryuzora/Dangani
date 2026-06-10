@@ -7,6 +7,7 @@ import com.ryuzora.dangani.data.mapper.toEntity
 import com.ryuzora.dangani.data.mapper.toFirestoreMap
 import com.ryuzora.dangani.data.remote.FirebaseAuthService
 import com.ryuzora.dangani.data.remote.FirebaseStorageService
+import com.ryuzora.dangani.data.remote.SupabaseStorageService
 import com.ryuzora.dangani.data.remote.FirestoreService
 import com.ryuzora.dangani.data.remote.dto.UserDto
 import com.ryuzora.dangani.domain.model.User
@@ -127,8 +128,13 @@ class UserRepositoryImpl(
 
     override suspend fun uploadProfilePhoto(userId: String, imageUri: String): Result<String> {
         return try {
-            val path = "profile_photos/$userId/${System.currentTimeMillis()}.jpg"
-            val uploadResult = storageService.uploadFile(path, Uri.parse(imageUri))
+            val path = "$userId/${System.currentTimeMillis()}.jpg"
+            val supabaseService = SupabaseStorageService()
+            val uploadResult = supabaseService.uploadFile(
+                bucket = "avatar",
+                path = path,
+                fileUri = Uri.parse(imageUri)
+            )
             val downloadUrl = uploadResult.getOrThrow()
 
             // Update Firestore

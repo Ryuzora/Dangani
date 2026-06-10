@@ -19,7 +19,8 @@ import kotlinx.coroutines.launch
 
 data class WorkSubmissionUiState(
     val task: Task? = null,
-    val driveLink: String = "",
+    val selectedFileUri: String? = null,
+    val selectedFileName: String? = null,
     val isUploading: Boolean = false,
     val isLoading: Boolean = true,
     val error: String? = null,
@@ -55,25 +56,20 @@ class WorkSubmissionViewModel(private val taskId: String) : ViewModel() {
         }
     }
 
-    fun onDriveLinkChanged(link: String) {
-        _uiState.update { it.copy(driveLink = link, error = null) }
+    fun onFileSelected(uri: String, fileName: String) {
+        _uiState.update { it.copy(selectedFileUri = uri, selectedFileName = fileName, error = null) }
     }
 
     fun submitWork() {
-        val link = _uiState.value.driveLink.trim()
-        if (link.isBlank()) {
-            _uiState.update { it.copy(error = "Masukkan link Google Drive terlebih dahulu") }
-            return
-        }
-
-        if (!isValidDriveLink(link)) {
-            _uiState.update { it.copy(error = "Masukkan link Google Drive yang valid") }
+        val fileUri = _uiState.value.selectedFileUri
+        if (fileUri.isNullOrBlank()) {
+            _uiState.update { it.copy(error = "Pilih file bukti pengerjaan terlebih dahulu") }
             return
         }
 
         viewModelScope.launch {
             _uiState.update { it.copy(isUploading = true, error = null) }
-            submitWorkUseCase(taskId, link)
+            submitWorkUseCase(taskId, fileUri)
                 .onSuccess {
                     _uiState.update { it.copy(isUploading = false, isSubmitted = true) }
                 }
@@ -81,13 +77,6 @@ class WorkSubmissionViewModel(private val taskId: String) : ViewModel() {
                     _uiState.update { it.copy(isUploading = false, error = e.message ?: "Gagal mengirim pekerjaan") }
                 }
         }
-    }
-
-    private fun isValidDriveLink(link: String): Boolean {
-        return link.startsWith("https://drive.google.com") ||
-                link.startsWith("https://docs.google.com") ||
-                link.startsWith("http://drive.google.com") ||
-                link.startsWith("http://docs.google.com")
     }
 
     fun cancelTask() {

@@ -78,6 +78,13 @@ fun ProfileScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    // Photo picker launcher
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { viewModel.uploadPhoto(it.toString()) }
+    }
+
 
 
     // Navigate to login on logout
@@ -153,6 +160,31 @@ fun ProfileScreen(
                                     )
                                 } else {
                                     AvatarPlaceholder(name = user?.username ?: "?", size = 100.dp)
+                                }
+                            }
+
+                            // Camera icon overlay
+                            Box(
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .offset(x = (-2).dp, y = (-2).dp)
+                                    .background(DanganiBlue, CircleShape)
+                                    .clickable { photoPickerLauncher.launch("image/*") },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (uiState.isUploadingPhoto) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(16.dp),
+                                        color = TextOnPrimary,
+                                        strokeWidth = 2.dp
+                                    )
+                                } else {
+                                    Icon(
+                                        imageVector = Icons.Filled.CameraAlt,
+                                        contentDescription = "Ubah foto",
+                                        modifier = Modifier.size(16.dp),
+                                        tint = TextOnPrimary
+                                    )
                                 }
                             }
                         }

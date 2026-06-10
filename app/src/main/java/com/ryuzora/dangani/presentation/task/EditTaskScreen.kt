@@ -369,57 +369,78 @@ fun EditTaskScreen(
                         )
                         Spacer(modifier = Modifier.height(10.dp))
 
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = CardDefaults.cardColors(containerColor = DanganiLightBlue.copy(alpha = 0.3f)),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                        ) {
-                            Column(
+                        val isImage = task.proofOfWorkUrl.lowercase().let { 
+                            it.contains(".jpg") || it.contains(".jpeg") || 
+                            it.contains(".png") || it.contains(".webp") || it.contains(".gif")
+                        }
+
+                        if (isImage) {
+                            Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(16.dp)
+                                    .height(200.dp)
+                                    .clickable {
+                                        val intent = android.content.Intent(
+                                            android.content.Intent.ACTION_VIEW,
+                                            android.net.Uri.parse(task.proofOfWorkUrl)
+                                        )
+                                        context.startActivity(intent)
+                                    },
+                                shape = RoundedCornerShape(12.dp),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                            ) {
+                                coil.compose.AsyncImage(
+                                    model = task.proofOfWorkUrl,
+                                    contentDescription = "Proof of Work",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
+                        } else {
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        val intent = android.content.Intent(
+                                            android.content.Intent.ACTION_VIEW,
+                                            android.net.Uri.parse(task.proofOfWorkUrl)
+                                        )
+                                        context.startActivity(intent)
+                                    },
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(containerColor = DanganiLightBlue.copy(alpha = 0.3f)),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                             ) {
                                 Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
                                     Icon(
                                         imageVector = Icons.Outlined.InsertDriveFile,
                                         contentDescription = null,
-                                        modifier = Modifier.size(28.dp),
+                                        modifier = Modifier.size(32.dp),
                                         tint = DanganiBlue
                                     )
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
-                                            text = "Bukti pengerjaan dikirim",
+                                            text = "File Bukti Pengerjaan",
                                             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
                                             color = DanganiBlue
                                         )
                                         Text(
-                                            text = task.updatedTimeAgo,
+                                            text = "Tap untuk membuka file",
                                             style = MaterialTheme.typography.bodySmall,
                                             color = TextSecondary
                                         )
                                     }
-                                }
-
-                                // Show the Google Drive link
-                                if (task.proofOfWorkUrl.isNotBlank()) {
-                                    Spacer(modifier = Modifier.height(10.dp))
-                                    Text(
-                                        text = task.proofOfWorkUrl,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = DanganiBlue,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis,
-                                        modifier = Modifier.clickable {
-                                            val intent = android.content.Intent(
-                                                android.content.Intent.ACTION_VIEW,
-                                                android.net.Uri.parse(task.proofOfWorkUrl)
-                                            )
-                                            context.startActivity(intent)
-                                        }
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                        contentDescription = "Buka",
+                                        tint = DanganiBlue,
+                                        modifier = Modifier.size(24.dp)
                                     )
                                 }
                             }

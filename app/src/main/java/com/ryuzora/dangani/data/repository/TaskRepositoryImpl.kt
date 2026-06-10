@@ -7,6 +7,7 @@ import com.ryuzora.dangani.data.local.entity.TaskApplicationEntity
 import com.ryuzora.dangani.data.mapper.toDomain
 import com.ryuzora.dangani.data.mapper.toEntity
 import com.ryuzora.dangani.data.mapper.toFirestoreMap
+import com.ryuzora.dangani.data.remote.SupabaseStorageService
 import com.ryuzora.dangani.data.remote.FirebaseStorageService
 import com.ryuzora.dangani.data.remote.FirestoreService
 import com.ryuzora.dangani.data.remote.dto.TaskApplicationDto
@@ -336,10 +337,29 @@ class TaskRepositoryImpl(
 
     // --- Submissions ---
 
-    override suspend fun submitWork(taskId: String, driveLink: String): Result<String> {
+    override suspend fun submitWork(taskId: String, fileUri: String): Result<String> {
         return try {
+            // Upload to Supabase Storage
+            val context = com.ryuzora.dangani.DanganiApplication.instance
+            val parsedUri = android.net.Uri.parse(fileUri)
+            val extension = if (parsedUri.scheme == "content") {
+                val mimeType = context.contentResolver.getType(parsedUri)
+                android.webkit.MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType) ?: "bin"
+            } else {
+                android.webkit.MimeTypeMap.getFileExtensionFromUrl(fileUri) ?: "bin"
+            }
+            val fileName = "${System.currentTimeMillis()}.$extension"
+            
+            val supabaseService = SupabaseStorageService()
+            val uploadResult = supabaseService.uploadFile(
+                bucket = "proof",
+                path = "$taskId/$fileName",
+                fileUri = parsedUri
+            )
+            val publicUrl = uploadResult.getOrThrow()
+
             val updates = mapOf(
-                "proofOfWorkUrl" to driveLink,
+                "proofOfWorkUrl" to publicUrl,
                 "status" to TaskStatus.NEED_REVIEW.name,
                 "updatedAt" to System.currentTimeMillis()
             )
@@ -367,7 +387,7 @@ class TaskRepositoryImpl(
                 notificationRepository.createNotification(notification)
             }
 
-            Result.success(driveLink)
+            Result.success(publicUrl)
         } catch (e: Exception) {
             Result.failure(e)
         }

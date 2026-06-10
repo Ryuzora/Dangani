@@ -1,8 +1,11 @@
 package com.ryuzora.dangani.presentation.submission
 
-import android.content.Intent
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,8 +22,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material.icons.outlined.Link
-import androidx.compose.material.icons.outlined.OpenInNew
+import androidx.compose.material.icons.outlined.CloudUpload
+import androidx.compose.material.icons.outlined.InsertDriveFile
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -28,11 +31,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -41,8 +41,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ryuzora.dangani.presentation.components.ButtonVariant
@@ -61,6 +64,16 @@ fun WorkSubmissionScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+
+    // File picker launcher
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            val fileName = it.lastPathSegment ?: "file"
+            viewModel.onFileSelected(it.toString(), fileName)
+        }
+    }
 
     LaunchedEffect(uiState.isSubmitted) {
         if (uiState.isSubmitted) {
@@ -201,9 +214,9 @@ fun WorkSubmissionScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Google Drive link section
+                    // Upload section
                     Text(
-                        text = "LINK BUKTI PENGERJAAN",
+                        text = "BUKTI PENGERJAAN",
                         style = MaterialTheme.typography.labelMedium.copy(
                             fontWeight = FontWeight.SemiBold
                         ),
@@ -211,89 +224,131 @@ fun WorkSubmissionScreen(
                     )
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    // Drive link input field
-                    OutlinedTextField(
-                        value = uiState.driveLink,
-                        onValueChange = viewModel::onDriveLinkChanged,
-                        modifier = Modifier.fillMaxWidth(),
-                        placeholder = {
-                            Text(
-                                text = "Paste link Google Drive di sini...",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = TextHint
-                            )
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Outlined.Link,
-                                contentDescription = null,
-                                tint = DanganiBlue
-                            )
-                        },
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = DanganiBlue,
-                            unfocusedBorderColor = DividerColor,
-                            focusedContainerColor = CardWhite,
-                            unfocusedContainerColor = CardWhite,
-                            cursorColor = DanganiBlue
-                        ),
-                        singleLine = true
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Open Google Drive button
-                    TextButton(
-                        onClick = {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://drive.google.com"))
-                            context.startActivity(intent)
+                    // File upload area
+                    val hasExistingProof = task.proofOfWorkUrl.isNotBlank()
+                    val showExisting = uiState.selectedFileName == null && hasExistingProof
+                    val isImage = if (showExisting) {
+                        task.proofOfWorkUrl.lowercase().let { 
+                            it.contains(".jpg") || it.contains(".jpeg") || 
+                            it.contains(".png") || it.contains(".webp") || it.contains(".gif")
                         }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.OpenInNew,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                            tint = DanganiBlue
-                        )
-                        Spacer(modifier = Modifier.size(6.dp))
-                        Text(
-                            text = "Buka Google Drive",
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                fontWeight = FontWeight.Medium
-                            ),
-                            color = DanganiBlue
-                        )
-                    }
+                    } else false
 
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Info notice
-                    Row(
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(
-                                color = DanganiLightBlue.copy(alpha = 0.3f),
+                            .height(140.dp)
+                            .border(
+                                width = 2.dp,
+                                color = if (uiState.selectedFileName != null || hasExistingProof) DanganiBlue else DividerColor,
                                 shape = RoundedCornerShape(12.dp)
                             )
-                            .padding(14.dp),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.Top
+                            .background(CardWhite, RoundedCornerShape(12.dp))
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable { filePickerLauncher.launch("*/*") },
+                        contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Link,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp),
-                            tint = DanganiBlue
-                        )
-                        Text(
-                            text = "Upload file hasil kerja ke Google Drive, lalu paste link share-nya di sini. Pastikan akses link diatur ke \"Anyone with the link\".",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextPrimary
-                        )
+                        if (showExisting) {
+                            if (isImage) {
+                                coil.compose.AsyncImage(
+                                    model = task.proofOfWorkUrl,
+                                    contentDescription = "Uploaded Proof",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                                )
+                                // Overlay
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.4f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Icon(Icons.Outlined.CloudUpload, contentDescription = null, tint = androidx.compose.ui.graphics.Color.White)
+                                        Text("Tap to change file", style = MaterialTheme.typography.bodySmall, color = androidx.compose.ui.graphics.Color.White)
+                                    }
+                                }
+                            } else {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.InsertDriveFile,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(36.dp),
+                                        tint = DanganiBlue
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "File Uploaded",
+                                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                                        color = TextPrimary
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text("Tap to change file", style = MaterialTheme.typography.bodySmall, color = TextHint)
+                                }
+                            }
+                        } else if (uiState.selectedFileName != null) {
+                            // Show selected file
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.InsertDriveFile,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(36.dp),
+                                    tint = DanganiBlue
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = uiState.selectedFileName!!,
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.Medium
+                                    ),
+                                    color = TextPrimary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Tap untuk mengganti file",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextHint
+                                )
+                            }
+                        } else {
+                            // Show upload prompt
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.CloudUpload,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(40.dp),
+                                    tint = DanganiBlue
+                                )
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Text(
+                                    text = "Tap untuk memilih file",
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.Medium
+                                    ),
+                                    color = DanganiBlue
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Semua tipe file didukung",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextHint
+                                )
+                            }
+                        }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     // Warning notice
                     Row(
@@ -334,10 +389,10 @@ fun WorkSubmissionScreen(
 
                     // Mark as Completed button
                     DanganiButton(
-                        text = if (uiState.isUploading) "Mengirim..." else "Mark as Completed",
+                        text = if (uiState.isUploading) "Mengunggah..." else "Mark as Completed",
                         onClick = { viewModel.submitWork() },
                         variant = ButtonVariant.CORAL,
-                        enabled = !uiState.isUploading && uiState.driveLink.isNotBlank()
+                        enabled = !uiState.isUploading && uiState.selectedFileUri != null
                     )
 
                     Spacer(modifier = Modifier.height(10.dp))
