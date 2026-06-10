@@ -46,6 +46,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import com.ryuzora.dangani.domain.model.TaskStatus
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ryuzora.dangani.presentation.components.ButtonVariant
@@ -135,6 +136,8 @@ fun WorkSubmissionScreen(
             }
             else -> {
                 val task = uiState.task!!
+                val isLocked = task.status == TaskStatus.ACCEPTED ||
+                        task.status == TaskStatus.NEED_REVIEW
 
                 Column(
                     modifier = Modifier
@@ -245,7 +248,9 @@ fun WorkSubmissionScreen(
                             )
                             .background(CardWhite, RoundedCornerShape(12.dp))
                             .clip(RoundedCornerShape(12.dp))
-                            .clickable { filePickerLauncher.launch("*/*") },
+                            .clickable(enabled = !isLocked) {
+                                filePickerLauncher.launch("*/*")
+                            },
                         contentAlignment = Alignment.Center
                     ) {
                         if (showExisting) {
@@ -265,7 +270,15 @@ fun WorkSubmissionScreen(
                                 ) {
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                         Icon(Icons.Outlined.CloudUpload, contentDescription = null, tint = androidx.compose.ui.graphics.Color.White)
-                                        Text("Tap to change file", style = MaterialTheme.typography.bodySmall, color = androidx.compose.ui.graphics.Color.White)
+                                        Text(
+                                            text = when (task.status) {
+                                                TaskStatus.ACCEPTED -> "Work accepted"
+                                                TaskStatus.NEED_REVIEW -> "Waiting for requester"
+                                                else -> "Tap to change file"
+                                            },
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = androidx.compose.ui.graphics.Color.White
+                                        )
                                     }
                                 }
                             } else {
@@ -286,7 +299,15 @@ fun WorkSubmissionScreen(
                                         color = TextPrimary
                                     )
                                     Spacer(modifier = Modifier.height(4.dp))
-                                    Text("Tap to change file", style = MaterialTheme.typography.bodySmall, color = TextHint)
+                                    Text(
+                                        text = when (task.status) {
+                                            TaskStatus.ACCEPTED -> "Work accepted"
+                                            TaskStatus.NEED_REVIEW -> "Waiting for requester"
+                                            else -> "Tap to change file"
+                                        },
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = TextHint
+                                    )
                                 }
                             }
                         } else if (uiState.selectedFileName != null) {
@@ -387,23 +408,65 @@ fun WorkSubmissionScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Mark as Completed button
-                    DanganiButton(
-                        text = if (uiState.isUploading) "Mengunggah..." else "Mark as Completed",
-                        onClick = { viewModel.submitWork() },
-                        variant = ButtonVariant.CORAL,
-                        enabled = !uiState.isUploading && uiState.selectedFileUri != null
-                    )
+                    when (task.status) {
+                        TaskStatus.ACCEPTED -> {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = androidx.compose.ui.graphics.Color(0xFFE8F5E9)
+                                ),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                            ) {
+                                Text(
+                                    text = "Pekerjaan sudah diterima oleh requester. Task ini sudah selesai dan tidak bisa diubah lagi.",
+                                    modifier = Modifier.padding(16.dp),
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.SemiBold
+                                    ),
+                                    color = androidx.compose.ui.graphics.Color(0xFF2E7D32)
+                                )
+                            }
+                        }
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                        TaskStatus.NEED_REVIEW -> {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = androidx.compose.ui.graphics.Color(0xFFFFF3E0)
+                                ),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                            ) {
+                                Text(
+                                    text = "Bukti pekerjaan sudah dikirim. Menunggu requester menerima pekerjaan atau meminta revisi.",
+                                    modifier = Modifier.padding(16.dp),
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.SemiBold
+                                    ),
+                                    color = androidx.compose.ui.graphics.Color(0xFFE65100)
+                                )
+                            }
+                        }
 
-                    // Cancel Task button
-                    DanganiButton(
-                        text = "Cancel Task",
-                        onClick = { viewModel.cancelTask() },
-                        variant = ButtonVariant.DANGER,
-                        enabled = !uiState.isUploading
-                    )
+                        else -> {
+                            DanganiButton(
+                                text = if (uiState.isUploading) "Mengunggah..." else "Mark as Completed",
+                                onClick = { viewModel.submitWork() },
+                                variant = ButtonVariant.CORAL,
+                                enabled = !uiState.isUploading && uiState.selectedFileUri != null
+                            )
+
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            DanganiButton(
+                                text = "Cancel Task",
+                                onClick = { viewModel.cancelTask() },
+                                variant = ButtonVariant.DANGER,
+                                enabled = !uiState.isUploading
+                            )
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(24.dp))
                 }

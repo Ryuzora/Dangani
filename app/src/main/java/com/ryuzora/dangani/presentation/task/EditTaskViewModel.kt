@@ -170,27 +170,57 @@ class EditTaskViewModel(private val taskId: String) : ViewModel() {
     }
 
     fun acceptWork() {
+        val task = _uiState.value.task ?: return
+
+        if (task.status != TaskStatus.NEED_REVIEW) {
+            _uiState.update {
+                it.copy(error = "Tugas ini tidak bisa diterima karena statusnya bukan Need Review")
+            }
+            return
+        }
+
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true, error = null) }
+
             acceptWorkUseCase(taskId)
                 .onSuccess {
                     _uiState.update { it.copy(isSaving = false, isSaved = true) }
                 }
                 .onFailure { e ->
-                    _uiState.update { it.copy(isSaving = false, error = e.message ?: "Gagal menerima pekerjaan") }
+                    _uiState.update {
+                        it.copy(
+                            isSaving = false,
+                            error = e.message ?: "Gagal menerima pekerjaan"
+                        )
+                    }
                 }
         }
     }
 
     fun requestRevision() {
+        val task = _uiState.value.task ?: return
+
+        if (task.status != TaskStatus.NEED_REVIEW) {
+            _uiState.update {
+                it.copy(error = "Tugas ini tidak bisa diminta revisi karena statusnya bukan Need Review")
+            }
+            return
+        }
+
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true, error = null) }
+
             requestRevisionUseCase(taskId)
                 .onSuccess {
                     _uiState.update { it.copy(isSaving = false, isSaved = true) }
                 }
                 .onFailure { e ->
-                    _uiState.update { it.copy(isSaving = false, error = e.message ?: "Gagal meminta revisi") }
+                    _uiState.update {
+                        it.copy(
+                            isSaving = false,
+                            error = e.message ?: "Gagal meminta revisi"
+                        )
+                    }
                 }
         }
     }

@@ -47,6 +47,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -54,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.ryuzora.dangani.domain.model.TaskCategory
+import com.ryuzora.dangani.domain.model.TaskStatus
 import com.ryuzora.dangani.presentation.components.ButtonVariant
 import com.ryuzora.dangani.presentation.components.DanganiButton
 import com.ryuzora.dangani.presentation.components.DanganiTextField
@@ -458,46 +460,76 @@ fun EditTaskScreen(
                         Spacer(modifier = Modifier.height(12.dp))
                     }
 
-                    // Dynamic buttons based on task state
-                    if (uiState.proofSubmitted) {
-                        // Proof submitted → Ask Revision + Accept buttons
-                        DanganiButton(
-                            text = "Accept Work",
-                            onClick = { viewModel.acceptWork() },
-                            variant = ButtonVariant.PRIMARY,
-                            enabled = !uiState.isSaving
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-                        DanganiButton(
-                            text = "Ask Revision",
-                            onClick = { viewModel.requestRevision() },
-                            variant = ButtonVariant.DANGER,
-                            enabled = !uiState.isSaving
-                        )
-                    } else {
-                        // Editable states → Delete + Confirm buttons
-                        DanganiButton(
-                            text = "Confirm Changes",
-                            onClick = { viewModel.saveTask() },
-                            variant = ButtonVariant.PRIMARY,
-                            enabled = !uiState.isSaving && !uiState.isDeleting
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-                        DanganiButton(
-                            text = "Delete Task",
-                            onClick = { viewModel.deleteTask() },
-                            variant = ButtonVariant.DANGER,
-                            enabled = !uiState.isSaving && !uiState.isDeleting
-                        )
-
-                        // Select Helper button if task is UNASSIGNED and has applicants
-                        if (task.helperId.isBlank() && task.applicantCount > 0) {
-                            Spacer(modifier = Modifier.height(10.dp))
+// Dynamic buttons based on task state
+                    when (task.status) {
+                        TaskStatus.NEED_REVIEW -> {
                             DanganiButton(
-                                text = "Select Helper (${task.applicantCount})",
-                                onClick = onNavigateToSelectHelper,
-                                variant = ButtonVariant.SECONDARY
+                                text = "Accept Work",
+                                onClick = { viewModel.acceptWork() },
+                                variant = ButtonVariant.PRIMARY,
+                                enabled = !uiState.isSaving
                             )
+
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            DanganiButton(
+                                text = "Ask Revision",
+                                onClick = { viewModel.requestRevision() },
+                                variant = ButtonVariant.DANGER,
+                                enabled = !uiState.isSaving
+                            )
+                        }
+
+                        TaskStatus.ACCEPTED -> {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color(0xFFE8F5E9)
+                                ),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                            ) {
+                                Text(
+                                    text = "Tugas sudah selesai dan diterima. Tugas ini tidak bisa diubah lagi.",
+                                    modifier = Modifier.padding(16.dp),
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.SemiBold
+                                    ),
+                                    color = Color(0xFF2E7D32)
+                                )
+                            }
+                        }
+
+                        TaskStatus.UNASSIGNED,
+                        TaskStatus.IN_PROGRESS,
+                        TaskStatus.REVISION -> {
+                            if (uiState.isEditable) {
+                                DanganiButton(
+                                    text = "Confirm Changes",
+                                    onClick = { viewModel.saveTask() },
+                                    variant = ButtonVariant.PRIMARY,
+                                    enabled = !uiState.isSaving && !uiState.isDeleting
+                                )
+
+                                Spacer(modifier = Modifier.height(10.dp))
+
+                                DanganiButton(
+                                    text = "Delete Task",
+                                    onClick = { viewModel.deleteTask() },
+                                    variant = ButtonVariant.DANGER,
+                                    enabled = !uiState.isSaving && !uiState.isDeleting
+                                )
+
+                                if (task.helperId.isBlank() && task.applicantCount > 0) {
+                                    Spacer(modifier = Modifier.height(10.dp))
+
+                                    DanganiButton(
+                                        text = "Select Helper (${task.applicantCount})",
+                                        onClick = onNavigateToSelectHelper,
+                                        variant = ButtonVariant.SECONDARY
+                                    )
+                                }
+                            }
                         }
                     }
 
