@@ -15,6 +15,7 @@ import com.ryuzora.dangani.domain.usecase.search.GetSearchHistoryUseCase
 import com.ryuzora.dangani.domain.usecase.task.FilterTasksByCategoryUseCase
 import com.ryuzora.dangani.domain.usecase.task.GetAllTasksUseCase
 import com.ryuzora.dangani.domain.usecase.task.SearchTasksUseCase
+import com.ryuzora.dangani.domain.model.TaskStatus
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -59,12 +60,23 @@ class HomeViewModel : ViewModel() {
         loadSearchHistory()
     }
 
+    private fun onlyAvailableTasks(tasks: List<Task>): List<Task> {
+        return tasks.filter { task ->
+            task.status == TaskStatus.UNASSIGNED && task.helperId.isBlank()
+        }
+    }
+
     private fun loadTasks() {
         tasksJob?.cancel()
         tasksJob = viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             getAllTasksUseCase().collect { tasks ->
-                _uiState.update { it.copy(tasks = tasks, isLoading = false) }
+                _uiState.update {
+                    it.copy(
+                        tasks = onlyAvailableTasks(tasks),
+                        isLoading = false
+                    )
+                }
             }
         }
     }
@@ -85,7 +97,12 @@ class HomeViewModel : ViewModel() {
         tasksJob = viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             filterTasksByCategoryUseCase(category).collect { tasks ->
-                _uiState.update { it.copy(tasks = tasks, isLoading = false) }
+                _uiState.update {
+                    it.copy(
+                        tasks = onlyAvailableTasks(tasks),
+                        isLoading = false
+                    )
+                }
             }
         }
     }
@@ -105,7 +122,12 @@ class HomeViewModel : ViewModel() {
         tasksJob = viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             searchTasksUseCase(userId, query).collect { tasks ->
-                _uiState.update { it.copy(tasks = tasks, isLoading = false) }
+                _uiState.update {
+                    it.copy(
+                        tasks = onlyAvailableTasks(tasks),
+                        isLoading = false
+                    )
+                }
             }
         }
         loadSearchHistory()
