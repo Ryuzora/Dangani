@@ -25,6 +25,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
@@ -309,6 +310,54 @@ class TaskRepositoryImpl(
             if (taskDto != null) {
                 taskDto.id = taskId
                 taskDao.insert(taskDto.toEntity())
+            }
+
+            if (taskDto != null) {
+                val applicationDocs = firestoreService
+                    .queryCollection("task_applications", "taskId", taskId)
+                    .first()
+
+                applicationDocs.forEach { doc ->
+                    val applicationDto = doc.toObject(TaskApplicationDto::class.java) ?: return@forEach
+                    val isSelectedHelper = applicationDto.helperId == helperId
+                    val applicationStatus = if (isSelectedHelper) "accepted" else "rejected"
+
+                    firestoreService.updateDocument(
+                        "task_applications",
+                        doc.id,
+                        mapOf("status" to applicationStatus)
+                    )
+
+                    taskApplicationDao.insert(
+                        TaskApplicationEntity(
+                            id = doc.id,
+                            taskId = applicationDto.taskId,
+                            helperId = applicationDto.helperId,
+                            helperName = applicationDto.helperName,
+                            helperAvatarUrl = applicationDto.helperAvatarUrl,
+                            helperRating = applicationDto.helperRating,
+                            helperTasksCompleted = applicationDto.helperTasksCompleted,
+                            helperIsTopHelper = applicationDto.helperIsTopHelper,
+                            status = applicationStatus,
+                            appliedAt = applicationDto.appliedAt
+                        )
+                    )
+
+                    if (!isSelectedHelper) {
+                        val notSelectedNotification = Notification(
+                            userId = applicationDto.helperId,
+                            role = "helper",
+                            type = NotificationType.APPLICATION_NOT_SELECTED,
+                            title = NotificationType.APPLICATION_NOT_SELECTED.displayName,
+                            message = "Requester memilih helper lain untuk tugas \"${taskDto.title}\"",
+                            relatedTaskId = taskId,
+                            relatedTaskTitle = taskDto.title,
+                            senderName = taskDto.requesterName,
+                            senderAvatarUrl = taskDto.requesterAvatarUrl
+                        )
+                        notificationRepository.createNotification(notSelectedNotification)
+                    }
+                }
             }
 
             // Notification for helper

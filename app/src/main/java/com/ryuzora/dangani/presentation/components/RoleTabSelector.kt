@@ -26,7 +26,8 @@ import com.ryuzora.dangani.ui.theme.*
 fun RoleTabSelector(
     selectedTab: Int,
     onTabSelected: (Int) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    unreadCounts: List<Int> = emptyList()
 ) {
     val tabs = listOf("As Requester", "As Helper")
 
@@ -48,7 +49,7 @@ fun RoleTabSelector(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = title,
+                    text = unreadCounts.getOrNull(index)?.takeIf { it > 0 }?.let { "$title ($it)" } ?: title,
                     style = MaterialTheme.typography.titleSmall.copy(
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                     ),

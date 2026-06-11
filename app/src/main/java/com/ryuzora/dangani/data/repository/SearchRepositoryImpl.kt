@@ -10,6 +10,7 @@ import com.ryuzora.dangani.data.mapper.toEntity
 import com.ryuzora.dangani.data.mapper.toFirestoreMap
 import com.ryuzora.dangani.data.remote.FirestoreService
 import com.ryuzora.dangani.data.remote.dto.ReviewDto
+import com.ryuzora.dangani.data.remote.dto.UserDto
 import com.ryuzora.dangani.domain.model.Review
 import com.ryuzora.dangani.domain.repository.SearchRepository
 import kotlinx.coroutines.CoroutineScope
@@ -84,7 +85,21 @@ class SearchRepositoryImpl(
                 firestoreService.queryCollection("reviews", "revieweeId", userId).collect { docs ->
                     val entities = docs.mapNotNull { doc ->
                         val dto = doc.toObject(ReviewDto::class.java)
-                        dto?.apply { id = doc.id }?.toEntity()
+                        dto?.apply {
+                            id = doc.id
+                            if ((reviewerName.isBlank() || reviewerAvatarUrl.isBlank()) && reviewerId.isNotBlank()) {
+                                val reviewer = firestoreService
+                                    .getDocument("users", reviewerId)
+                                    ?.toObject(UserDto::class.java)
+
+                                if (reviewerName.isBlank()) {
+                                    reviewerName = reviewer?.username.orEmpty()
+                                }
+                                if (reviewerAvatarUrl.isBlank()) {
+                                    reviewerAvatarUrl = reviewer?.avatarUrl.orEmpty()
+                                }
+                            }
+                        }?.toEntity()
                     }
                     reviewDao.insertAll(entities)
                 }

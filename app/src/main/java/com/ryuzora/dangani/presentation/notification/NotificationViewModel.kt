@@ -48,7 +48,11 @@ class NotificationViewModel : ViewModel() {
     }
 
     private fun loadNotifications() {
-        val userId = userRepo.getCurrentUserId() ?: return
+        val userId = userRepo.getCurrentUserId()
+        if (userId == null) {
+            _uiState.update { it.copy(isLoading = false) }
+            return
+        }
 
         // Load requester notifications
         viewModelScope.launch {

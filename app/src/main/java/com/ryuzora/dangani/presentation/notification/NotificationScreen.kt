@@ -75,7 +75,8 @@ fun NotificationScreen(
         // Role Tab Selector
         RoleTabSelector(
             selectedTab = uiState.selectedTab,
-            onTabSelected = viewModel::onTabSelected
+            onTabSelected = viewModel::onTabSelected,
+            unreadCounts = listOf(uiState.requesterUnreadCount, uiState.helperUnreadCount)
         )
 
         // Content
