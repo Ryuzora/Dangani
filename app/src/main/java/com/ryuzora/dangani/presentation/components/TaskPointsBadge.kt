@@ -3,10 +3,9 @@ package com.ryuzora.dangani.presentation.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,18 +24,47 @@ fun TaskPointsBadge(
     isLarge: Boolean = false,
     modifier: Modifier = Modifier
 ) {
-    Row(
-        modifier = modifier
-            .clip(androidx.compose.foundation.shape.CircleShape)
-            .background(TaskPointsGreen)
-            .padding(horizontal = 12.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = "$points TASK POINTS",
-            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-            color = TextOnPrimary
-        )
+    if (isLarge) {
+        Column(
+            modifier = modifier
+                .size(112.dp)
+                .clip(RoundedCornerShape(28.dp))
+                .background(TaskPointsGreen)
+                .padding(horizontal = 14.dp, vertical = 18.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = points.toString(),
+                style = MaterialTheme.typography.displaySmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 44.sp
+                ),
+                color = TextOnPrimary
+            )
+            Text(
+                text = "TASK POINTS",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 2.sp
+                ),
+                color = TextOnPrimary
+            )
+        }
+    } else {
+        Column(
+            modifier = modifier
+                .clip(RoundedCornerShape(50))
+                .background(TaskPointsGreen)
+                .padding(horizontal = 12.dp, vertical = 6.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "$points TASK POINTS",
+                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                color = TextOnPrimary
+            )
+        }
     }
 }

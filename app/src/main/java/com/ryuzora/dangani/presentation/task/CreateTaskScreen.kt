@@ -212,7 +212,7 @@ fun CreateTaskScreen(
                     tint = DanganiBlue
                 )
                 Text(
-                    text = "Verified Verification — Pastikan tugas yang dibuat sesuai dengan ketentuan kampus. Tugas akan ditinjau sebelum dipublikasikan.",
+                    text = "Only @mhs.ulm.ac.id accounts can see this task.",
                     style = MaterialTheme.typography.bodySmall,
                     color = DanganiBlue
                 )

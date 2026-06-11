@@ -185,14 +185,6 @@ fun TaskDetailScreen(
                             points = task.taskPoints,
                             isLarge = true
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "TASK POINTS",
-                            style = MaterialTheme.typography.labelMedium.copy(
-                                fontWeight = FontWeight.SemiBold
-                            ),
-                            color = TextSecondary
-                        )
                     }
 
                     Spacer(modifier = Modifier.height(28.dp))
