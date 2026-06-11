@@ -104,6 +104,11 @@ fun MyTaskCard(
                         val avatarUrl = if (isRequesterView) task.helperAvatarUrl else task.requesterAvatarUrl
                         val name = if (isRequesterView) task.helperName else task.requesterName
                         val roleLabel = if (isRequesterView) "Helper" else "Requester"
+                        val fallbackName = if (!isRequesterView && task.requesterId.isNotBlank()) {
+                            "Memuat requester..."
+                        } else {
+                            "Belum ada"
+                        }
 
                         if (avatarUrl.isNotBlank()) {
                             AsyncImage(
@@ -136,7 +141,7 @@ fun MyTaskCard(
                                 )
                             } else {
                                 Text(
-                                    text = "Belum ada",
+                                    text = fallbackName,
                                     style = MaterialTheme.typography.bodySmall,
                                     color = TextHint
                                 )

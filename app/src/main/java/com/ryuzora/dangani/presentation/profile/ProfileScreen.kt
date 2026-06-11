@@ -43,6 +43,9 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -82,6 +85,7 @@ fun ProfileScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    var showAllReviews by remember { mutableStateOf(false) }
 
     // Photo picker launcher
     val photoPickerLauncher = rememberLauncherForActivityResult(
@@ -333,6 +337,46 @@ fun ProfileScreen(
                     }
                 }
 
+                // Action buttons
+                item {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                            .padding(bottom = 24.dp)
+                    ) {
+                        DanganiButton(
+                            text = "Edit Profil",
+                            onClick = { /* TODO: Navigate to edit profile */ },
+                            variant = ButtonVariant.PRIMARY
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        TextButton(
+                            onClick = viewModel::logout,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = "Keluar",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = ErrorRed
+                            )
+                        }
+
+                        if (uiState.error != null) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = uiState.error!!,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = ErrorRed,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                }
+
                 // Reviews section
                 item {
                     Column(
@@ -363,7 +407,7 @@ fun ProfileScreen(
 
                 // Review items
                 items(
-                    items = uiState.reviews,
+                    items = if (showAllReviews) uiState.reviews else uiState.reviews.take(3),
                     key = { it.id }
                 ) { review ->
                     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
@@ -372,47 +416,29 @@ fun ProfileScreen(
                     }
                 }
 
-                // Action buttons
-                item {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp)
-                            .padding(top = 24.dp, bottom = 32.dp)
-                    ) {
-                        // Edit Profile button
-                        DanganiButton(
-                            text = "Edit Profil",
-                            onClick = { /* TODO: Navigate to edit profile */ },
-                            variant = ButtonVariant.PRIMARY
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        // Logout button
+                if (uiState.reviews.size > 3) {
+                    item {
                         TextButton(
-                            onClick = viewModel::logout,
-                            modifier = Modifier.fillMaxWidth()
+                            onClick = { showAllReviews = !showAllReviews },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
                         ) {
                             Text(
-                                text = "Keluar",
+                                text = if (showAllReviews) {
+                                    "Tampilkan lebih sedikit"
+                                } else {
+                                    "Lihat semua ulasan (${uiState.reviews.size})"
+                                },
                                 style = MaterialTheme.typography.labelLarge,
-                                color = ErrorRed
-                            )
-                        }
-
-                        // Error message
-                        if (uiState.error != null) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = uiState.error!!,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = ErrorRed,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.fillMaxWidth()
+                                color = DanganiBlue
                             )
                         }
                     }
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(32.dp))
                 }
             }
         }

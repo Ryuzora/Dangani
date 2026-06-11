@@ -106,7 +106,9 @@ class SearchRepositoryImpl(
             } catch (_: Exception) { }
         }
         return reviewDao.getByRevieweeId(userId).map { entities ->
-            entities.map { it.toDomain() }
+            entities
+                .map { it.toDomain() }
+                .latestReviewPerTask()
         }
     }
 
@@ -123,5 +125,12 @@ class SearchRepositoryImpl(
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    private fun List<Review>.latestReviewPerTask(): List<Review> {
+        return groupBy { it.taskId.ifBlank { it.id } }
+            .values
+            .mapNotNull { reviews -> reviews.maxByOrNull { it.createdAt } }
+            .sortedByDescending { it.createdAt }
     }
 }

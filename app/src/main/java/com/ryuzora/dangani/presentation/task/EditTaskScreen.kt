@@ -60,6 +60,7 @@ import com.ryuzora.dangani.presentation.components.ButtonVariant
 import com.ryuzora.dangani.presentation.components.DanganiButton
 import com.ryuzora.dangani.presentation.components.DanganiTextField
 import com.ryuzora.dangani.presentation.components.StatusBadge
+import com.ryuzora.dangani.presentation.components.TaskProfileCard
 import com.ryuzora.dangani.presentation.components.TaskPointsSelector
 import com.ryuzora.dangani.presentation.components.VerifiedBadge
 import com.ryuzora.dangani.ui.theme.*
@@ -273,6 +274,16 @@ fun EditTaskScreen(
                         )
                         Spacer(modifier = Modifier.height(10.dp))
 
+                        TaskProfileCard(
+                            name = helper.username,
+                            avatarUrl = helper.avatarUrl,
+                            rating = helper.ratingAverage,
+                            statsText = "${helper.tasksCompleted} tugas selesai",
+                            contentDescription = "Helper Avatar",
+                            isVerified = helper.isVerified,
+                            onClick = { onNavigateToProfile(helper.id) }
+                        )
+                        if (false) {
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -360,6 +371,7 @@ fun EditTaskScreen(
                                     modifier = Modifier.size(24.dp)
                                 )
                             }
+                        }
                         }
                         Spacer(modifier = Modifier.height(16.dp))
                     }

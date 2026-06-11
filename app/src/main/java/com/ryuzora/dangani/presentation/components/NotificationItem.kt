@@ -46,6 +46,14 @@ fun NotificationItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val senderName = notification.senderName.ifBlank {
+        when (notification.role) {
+            "helper" -> "Requester"
+            "requester" -> "Helper"
+            else -> "Pengguna"
+        }
+    }
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -111,7 +119,7 @@ fun NotificationItem(
                             contentScale = ContentScale.Crop
                         )
                     } else {
-                        AvatarPlaceholder(name = notification.senderName, size = 40.dp)
+                        AvatarPlaceholder(name = senderName, size = 40.dp)
                     }
                 }
 

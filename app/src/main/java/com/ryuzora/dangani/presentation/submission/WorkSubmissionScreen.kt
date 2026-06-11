@@ -53,6 +53,7 @@ import com.ryuzora.dangani.presentation.components.ButtonVariant
 import com.ryuzora.dangani.presentation.components.CategoryChip
 import com.ryuzora.dangani.presentation.components.DanganiButton
 import com.ryuzora.dangani.presentation.components.StatusBadge
+import com.ryuzora.dangani.presentation.components.TaskProfileCard
 import com.ryuzora.dangani.presentation.components.TaskPointsBadge
 import com.ryuzora.dangani.ui.theme.*
 
@@ -61,6 +62,7 @@ import com.ryuzora.dangani.ui.theme.*
 fun WorkSubmissionScreen(
     taskId: String,
     onNavigateBack: () -> Unit,
+    onNavigateToProfile: (String) -> Unit,
     viewModel: WorkSubmissionViewModel = remember { WorkSubmissionViewModel(taskId) }
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -136,6 +138,7 @@ fun WorkSubmissionScreen(
             }
             else -> {
                 val task = uiState.task!!
+                val requester = uiState.requester
                 val isLocked = task.status == TaskStatus.ACCEPTED ||
                         task.status == TaskStatus.NEED_REVIEW
 
@@ -193,15 +196,18 @@ fun WorkSubmissionScreen(
                                 color = TextSecondary
                             )
 
-                            if (task.requesterName.isNotBlank()) {
-                                Spacer(modifier = Modifier.height(14.dp))
+                            Spacer(modifier = Modifier.height(14.dp))
 
-                                Text(
-                                    text = "Assigned by ${task.requesterName}",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = TextHint
-                                )
-                            }
+                            TaskProfileCard(
+                                name = requester?.username ?: task.requesterName,
+                                avatarUrl = requester?.avatarUrl ?: task.requesterAvatarUrl,
+                                rating = requester?.ratingAverage ?: 0.0,
+                                statsText = "${requester?.tasksUploaded ?: 0} tugas dibuat",
+                                contentDescription = "Requester Avatar",
+                                isVerified = requester?.isVerified ?: task.requesterIsVerified,
+                                enabled = task.requesterId.isNotBlank(),
+                                onClick = { onNavigateToProfile(task.requesterId) }
+                            )
                         }
                     }
 
