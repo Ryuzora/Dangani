@@ -81,7 +81,7 @@ class EditTaskViewModel(private val taskId: String) : ViewModel() {
                             description = task.description,
                             selectedCategory = task.category,
                             selectedPoints = task.taskPoints,
-                            isEditable = task.isEditable,
+                            isEditable = task.status == TaskStatus.UNASSIGNED && task.helperId.isBlank(),
                             proofSubmitted = proofSubmitted,
                             isLoading = false
                         )
@@ -130,6 +130,13 @@ class EditTaskViewModel(private val taskId: String) : ViewModel() {
         val state = _uiState.value
         val task = state.task ?: return
 
+        if (task.status != TaskStatus.UNASSIGNED || task.helperId.isNotBlank()) {
+            _uiState.update {
+                it.copy(error = "Task sudah memiliki helper, isi task tidak bisa diubah lagi")
+            }
+            return
+        }
+
         if (state.title.isBlank() || state.description.isBlank()) {
             _uiState.update { it.copy(error = "Judul dan deskripsi tidak boleh kosong") }
             return
@@ -149,7 +156,12 @@ class EditTaskViewModel(private val taskId: String) : ViewModel() {
                     _uiState.update { it.copy(isSaving = false, isSaved = true) }
                 }
                 .onFailure { e ->
-                    _uiState.update { it.copy(isSaving = false, error = e.message ?: "Gagal menyimpan tugas") }
+                    _uiState.update {
+                        it.copy(
+                            isSaving = false,
+                            error = e.message ?: "Gagal menyimpan tugas"
+                        )
+                    }
                 }
         }
     }
