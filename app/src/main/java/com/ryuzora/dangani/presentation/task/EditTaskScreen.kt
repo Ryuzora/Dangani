@@ -63,6 +63,12 @@ import com.ryuzora.dangani.presentation.components.StatusBadge
 import com.ryuzora.dangani.presentation.components.TaskPointsSelector
 import com.ryuzora.dangani.presentation.components.VerifiedBadge
 import com.ryuzora.dangani.ui.theme.*
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.Star
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -241,19 +247,18 @@ fun EditTaskScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     // TASK POINTS
-                    if (uiState.isEditable) {
-                        Text(
-                            text = "TASK POINTS",
-                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-                            color = TextSecondary
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        TaskPointsSelector(
-                            selectedPoints = uiState.selectedPoints,
-                            onPointsSelected = viewModel::onPointsSelected
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                    }
+                    Text(
+                        text = "TASK POINTS",
+                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                        color = TextSecondary
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    TaskPointsSelector(
+                        selectedPoints = uiState.selectedPoints,
+                        onPointsSelected = viewModel::onPointsSelected,
+                        enabled = uiState.isEditable
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     // Helper section (when helper is assigned)
                     val helper = uiState.helper
@@ -498,6 +503,58 @@ fun EditTaskScreen(
                                     color = Color(0xFF2E7D32)
                                 )
                             }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            if (uiState.existingReview != null) {
+                                val review = uiState.existingReview
+
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = Color(0xFFE3F2FD)
+                                    ),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(16.dp)
+                                    ) {
+                                        Text(
+                                            text = "Ulasan untuk Helper",
+                                            style = MaterialTheme.typography.titleMedium.copy(
+                                                fontWeight = FontWeight.Bold
+                                            ),
+                                            color = Color(0xFF0D47A1)
+                                        )
+
+                                        Spacer(modifier = Modifier.height(8.dp))
+
+                                        Text(
+                                            text = "Rating: ${review?.rating ?: 0}/5",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = TextPrimary
+                                        )
+
+                                        Spacer(modifier = Modifier.height(6.dp))
+
+                                        Text(
+                                            text = review?.comment ?: "",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = TextSecondary
+                                        )
+                                    }
+                                }
+                            } else {
+                                HelperReviewForm(
+                                    rating = uiState.reviewRating,
+                                    comment = uiState.reviewComment,
+                                    isSubmitting = uiState.isReviewSubmitting,
+                                    onRatingChange = viewModel::onReviewRatingChange,
+                                    onCommentChange = viewModel::onReviewCommentChange,
+                                    onSubmit = { viewModel.submitReview() }
+                                )
+                            }
                         }
 
                         TaskStatus.UNASSIGNED,
@@ -536,6 +593,90 @@ fun EditTaskScreen(
                     Spacer(modifier = Modifier.height(24.dp))
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun HelperReviewForm(
+    rating: Int,
+    comment: String,
+    isSubmitting: Boolean,
+    onRatingChange: (Int) -> Unit,
+    onCommentChange: (String) -> Unit,
+    onSubmit: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = CardWhite
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(
+                text = "Beri Ulasan untuk Helper",
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold
+                ),
+                color = TextPrimary
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "Rating",
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontWeight = FontWeight.SemiBold
+                ),
+                color = TextSecondary
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                for (star in 1..5) {
+                    Text(
+                        text = if (star <= rating) "★" else "☆",
+                        fontSize = 34.sp,
+                        color = Color(0xFFFFC107),
+                        modifier = Modifier.clickable(enabled = !isSubmitting) {
+                            onRatingChange(star)
+                        }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            OutlinedTextField(
+                value = comment,
+                onValueChange = onCommentChange,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isSubmitting,
+                minLines = 3,
+                label = {
+                    Text("Komentar")
+                },
+                placeholder = {
+                    Text("Tulis ulasan untuk helper...")
+                }
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            DanganiButton(
+                text = if (isSubmitting) "Mengirim..." else "Kirim Ulasan",
+                onClick = onSubmit,
+                variant = ButtonVariant.PRIMARY,
+                enabled = !isSubmitting && comment.isNotBlank()
+            )
         }
     }
 }

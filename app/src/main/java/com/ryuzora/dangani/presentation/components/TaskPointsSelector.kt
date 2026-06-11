@@ -26,7 +26,8 @@ import com.ryuzora.dangani.ui.theme.*
 fun TaskPointsSelector(
     selectedPoints: Int,
     onPointsSelected: (Int) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
 ) {
     FlowRow(
         modifier = modifier.fillMaxWidth(),
@@ -44,7 +45,7 @@ fun TaskPointsSelector(
                         if (isSelected) TaskPointsGreen
                         else com.ryuzora.dangani.ui.theme.SurfaceLight
                     )
-                    .clickable { onPointsSelected(tp.value) }
+                    .clickable(enabled = enabled) { onPointsSelected(tp.value) }
                     .padding(vertical = 18.dp, horizontal = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center

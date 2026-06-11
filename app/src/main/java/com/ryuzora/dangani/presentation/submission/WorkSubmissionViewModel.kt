@@ -16,11 +16,15 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.ryuzora.dangani.data.repository.ReviewRepositoryImpl
+import com.ryuzora.dangani.domain.model.Review
+import com.ryuzora.dangani.domain.usecase.review.GetReviewByTaskIdUseCase
 
 data class WorkSubmissionUiState(
     val task: Task? = null,
     val selectedFileUri: String? = null,
     val selectedFileName: String? = null,
+    val review: Review? = null,
     val isUploading: Boolean = false,
     val isLoading: Boolean = true,
     val error: String? = null,
@@ -37,8 +41,12 @@ class WorkSubmissionViewModel(private val taskId: String) : ViewModel() {
     private val notificationRepo = NotificationRepositoryImpl(db.notificationDao(), firestoreService)
     private val taskRepo = TaskRepositoryImpl(db.taskDao(), db.taskApplicationDao(), firestoreService, storageService, notificationRepo)
 
+    private val reviewRepo = ReviewRepositoryImpl(firestoreService)
+
     private val getTaskByIdUseCase = GetTaskByIdUseCase(taskRepo)
     private val submitWorkUseCase = SubmitWorkUseCase(taskRepo)
+
+    private val getReviewByTaskIdUseCase = GetReviewByTaskIdUseCase(reviewRepo)
 
     private val _uiState = MutableStateFlow(WorkSubmissionUiState())
     val uiState: StateFlow<WorkSubmissionUiState> = _uiState.asStateFlow()
@@ -50,8 +58,24 @@ class WorkSubmissionViewModel(private val taskId: String) : ViewModel() {
     private fun loadTask() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
+
             getTaskByIdUseCase(taskId).collect { task ->
-                _uiState.update { it.copy(task = task, isLoading = false) }
+                _uiState.update {
+                    it.copy(
+                        task = task,
+                        isLoading = false
+                    )
+                }
+
+                if (task != null) {
+                    launch {
+                        getReviewByTaskIdUseCase(task.id).collect { review ->
+                            _uiState.update {
+                                it.copy(review = review)
+                            }
+                        }
+                    }
+                }
             }
         }
     }
