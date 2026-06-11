@@ -1,6 +1,7 @@
 package com.ryuzora.dangani.data.repository
 
 import android.net.Uri
+import com.google.firebase.firestore.DocumentSnapshot
 import com.ryuzora.dangani.data.local.dao.TaskApplicationDao
 import com.ryuzora.dangani.data.local.dao.TaskDao
 import com.ryuzora.dangani.data.local.entity.TaskApplicationEntity
@@ -25,6 +26,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
@@ -38,15 +40,51 @@ class TaskRepositoryImpl(
 
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
 
+    private suspend fun taskEntitiesFromDocuments(docs: List<DocumentSnapshot>) =
+        docs.mapNotNull { doc ->
+            val dto = doc.toObject(TaskDto::class.java) ?: return@mapNotNull null
+            dto.id = doc.id
+            fillRequesterInfo(dto).toEntity()
+        }
+
+    private suspend fun fillRequesterInfo(taskDto: TaskDto): TaskDto {
+        if (taskDto.requesterId.isBlank()) return taskDto
+        if (taskDto.requesterName.isNotBlank()) return taskDto
+
+        val requester = firestoreService
+            .getDocument("users", taskDto.requesterId)
+            ?.toObject(UserDto::class.java)
+            ?: return taskDto
+
+        val updatedTask = taskDto.apply {
+            if (requesterName.isBlank()) requesterName = requester.username
+            if (requesterAvatarUrl.isBlank()) requesterAvatarUrl = requester.avatarUrl
+            requesterIsVerified = requester.isVerified
+        }
+
+        if (updatedTask.id.isNotBlank()) {
+            try {
+                firestoreService.updateDocument(
+                    "tasks",
+                    updatedTask.id,
+                    mapOf(
+                        "requesterName" to updatedTask.requesterName,
+                        "requesterAvatarUrl" to updatedTask.requesterAvatarUrl,
+                        "requesterIsVerified" to updatedTask.requesterIsVerified
+                    )
+                )
+            } catch (_: Exception) { }
+        }
+
+        return updatedTask
+    }
+
     override fun getAllTasks(): Flow<List<Task>> {
         // Sync from Firestore in background
         coroutineScope.launch {
             try {
                 firestoreService.getCollection("tasks").collect { docs ->
-                    val entities = docs.mapNotNull { doc ->
-                        val dto = doc.toObject(TaskDto::class.java)
-                        dto?.apply { id = doc.id }?.toEntity()
-                    }
+                    val entities = taskEntitiesFromDocuments(docs)
                     taskDao.insertAll(entities)
                 }
             } catch (_: Exception) { }
@@ -63,7 +101,7 @@ class TaskRepositoryImpl(
                     val dto = doc.toObject(TaskDto::class.java)
                     if (dto != null) {
                         dto.id = taskId
-                        taskDao.insert(dto.toEntity())
+                        taskDao.insert(fillRequesterInfo(dto).toEntity())
                     }
                 }
             } catch (_: Exception) { }
@@ -75,9 +113,7 @@ class TaskRepositoryImpl(
         coroutineScope.launch {
             try {
                 firestoreService.queryCollection("tasks", "requesterId", requesterId).collect { docs ->
-                    val entities = docs.mapNotNull { doc ->
-                        doc.toObject(TaskDto::class.java)?.apply { id = doc.id }?.toEntity()
-                    }
+                    val entities = taskEntitiesFromDocuments(docs)
                     taskDao.insertAll(entities)
                 }
             } catch (_: Exception) { }
@@ -89,9 +125,7 @@ class TaskRepositoryImpl(
         coroutineScope.launch {
             try {
                 firestoreService.queryCollection("tasks", "helperId", helperId).collect { docs ->
-                    val entities = docs.mapNotNull { doc ->
-                        doc.toObject(TaskDto::class.java)?.apply { id = doc.id }?.toEntity()
-                    }
+                    val entities = taskEntitiesFromDocuments(docs)
                     taskDao.insertAll(entities)
                 }
             } catch (_: Exception) { }
@@ -103,9 +137,7 @@ class TaskRepositoryImpl(
         coroutineScope.launch {
             try {
                 firestoreService.queryCollection("tasks", "category", category.name).collect { docs ->
-                    val entities = docs.mapNotNull { doc ->
-                        doc.toObject(TaskDto::class.java)?.apply { id = doc.id }?.toEntity()
-                    }
+                    val entities = taskEntitiesFromDocuments(docs)
                     taskDao.insertAll(entities)
                 }
             } catch (_: Exception) { }
@@ -117,9 +149,7 @@ class TaskRepositoryImpl(
         coroutineScope.launch {
             try {
                 firestoreService.queryCollection("tasks", "status", status.name).collect { docs ->
-                    val entities = docs.mapNotNull { doc ->
-                        doc.toObject(TaskDto::class.java)?.apply { id = doc.id }?.toEntity()
-                    }
+                    val entities = taskEntitiesFromDocuments(docs)
                     taskDao.insertAll(entities)
                 }
             } catch (_: Exception) { }
@@ -133,14 +163,25 @@ class TaskRepositoryImpl(
 
     override suspend fun createTask(task: Task): Result<String> {
         return try {
-            val taskMap = task.toFirestoreMap().toMutableMap()
+            val requesterDto = firestoreService
+                .getDocument("users", task.requesterId)
+                ?.toObject(UserDto::class.java)
+
+            val taskToCreate = task.copy(
+                requesterName = requesterDto?.username.orEmpty(),
+                requesterAvatarUrl = requesterDto?.avatarUrl.orEmpty(),
+                requesterIsVerified = requesterDto?.isVerified ?: false
+            )
+
+            val taskMap = taskToCreate.toFirestoreMap().toMutableMap()
             val docId = firestoreService.addDocument("tasks", taskMap)
 
             // Update Firestore doc with its own ID
             firestoreService.updateDocument("tasks", docId, mapOf("id" to docId))
 
-            val savedTask = task.copy(id = docId)
+            val savedTask = taskToCreate.copy(id = docId)
             taskDao.insert(savedTask.toEntity())
+            refreshRequesterStats(savedTask.requesterId)
 
             Result.success(docId)
         } catch (e: Exception) {
@@ -153,6 +194,7 @@ class TaskRepositoryImpl(
             val updatedTask = task.copy(updatedAt = System.currentTimeMillis())
             firestoreService.updateDocument("tasks", task.id, updatedTask.toFirestoreMap())
             taskDao.update(updatedTask.toEntity())
+            refreshRequesterStats(updatedTask.requesterId)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -161,9 +203,18 @@ class TaskRepositoryImpl(
 
     override suspend fun deleteTask(taskId: String): Result<Unit> {
         return try {
+            val existingTask = firestoreService
+                .getDocument("tasks", taskId)
+                ?.toObject(TaskDto::class.java)
+
             firestoreService.deleteDocument("tasks", taskId)
             taskDao.deleteById(taskId)
             taskApplicationDao.deleteByTaskId(taskId)
+
+            if (existingTask?.requesterId?.isNotBlank() == true) {
+                refreshRequesterStats(existingTask.requesterId)
+            }
+
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -311,7 +362,57 @@ class TaskRepositoryImpl(
                 taskDao.insert(taskDto.toEntity())
             }
 
+            if (taskDto != null) {
+                val applicationDocs = firestoreService
+                    .queryCollection("task_applications", "taskId", taskId)
+                    .first()
+                val requester = getRequesterForNotification(taskDto)
+
+                applicationDocs.forEach { doc ->
+                    val applicationDto = doc.toObject(TaskApplicationDto::class.java) ?: return@forEach
+                    val isSelectedHelper = applicationDto.helperId == helperId
+                    val applicationStatus = if (isSelectedHelper) "accepted" else "rejected"
+
+                    firestoreService.updateDocument(
+                        "task_applications",
+                        doc.id,
+                        mapOf("status" to applicationStatus)
+                    )
+
+                    taskApplicationDao.insert(
+                        TaskApplicationEntity(
+                            id = doc.id,
+                            taskId = applicationDto.taskId,
+                            helperId = applicationDto.helperId,
+                            helperName = applicationDto.helperName,
+                            helperAvatarUrl = applicationDto.helperAvatarUrl,
+                            helperRating = applicationDto.helperRating,
+                            helperTasksCompleted = applicationDto.helperTasksCompleted,
+                            helperIsTopHelper = applicationDto.helperIsTopHelper,
+                            status = applicationStatus,
+                            appliedAt = applicationDto.appliedAt
+                        )
+                    )
+
+                    if (!isSelectedHelper) {
+                        val notSelectedNotification = Notification(
+                            userId = applicationDto.helperId,
+                            role = "helper",
+                            type = NotificationType.APPLICATION_NOT_SELECTED,
+                            title = NotificationType.APPLICATION_NOT_SELECTED.displayName,
+                            message = "Requester memilih helper lain untuk tugas \"${taskDto.title}\"",
+                            relatedTaskId = taskId,
+                            relatedTaskTitle = taskDto.title,
+                            senderName = requester?.username ?: taskDto.requesterName,
+                            senderAvatarUrl = requester?.avatarUrl ?: taskDto.requesterAvatarUrl
+                        )
+                        notificationRepository.createNotification(notSelectedNotification)
+                    }
+                }
+            }
+
             // Notification for helper
+            val requester = taskDto?.let { getRequesterForNotification(it) }
             val notification = Notification(
                 userId = helperId,
                 role = "helper",
@@ -320,8 +421,8 @@ class TaskRepositoryImpl(
                 message = "Lamaranmu untuk tugas \"${taskDto?.title ?: ""}\" diterima!",
                 relatedTaskId = taskId,
                 relatedTaskTitle = taskDto?.title ?: "",
-                senderName = taskDto?.requesterName ?: "",
-                senderAvatarUrl = taskDto?.requesterAvatarUrl ?: ""
+                senderName = requester?.username ?: taskDto?.requesterName ?: "",
+                senderAvatarUrl = requester?.avatarUrl ?: taskDto?.requesterAvatarUrl ?: ""
             )
             notificationRepository.createNotification(notification)
 
@@ -407,6 +508,8 @@ class TaskRepositoryImpl(
             if (taskDto != null) {
                 taskDto.id = taskId
                 taskDao.insert(taskDto.toEntity())
+                refreshHelperStats(taskDto.helperId)
+                val requester = getRequesterForNotification(taskDto)
 
                 // Notification for helper
                 val notification = Notification(
@@ -417,8 +520,8 @@ class TaskRepositoryImpl(
                     message = "Pekerjaanmu untuk \"${taskDto.title}\" telah disetujui!",
                     relatedTaskId = taskId,
                     relatedTaskTitle = taskDto.title,
-                    senderName = taskDto.requesterName,
-                    senderAvatarUrl = taskDto.requesterAvatarUrl
+                    senderName = requester?.username ?: taskDto.requesterName,
+                    senderAvatarUrl = requester?.avatarUrl ?: taskDto.requesterAvatarUrl
                 )
                 notificationRepository.createNotification(notification)
             }
@@ -444,6 +547,7 @@ class TaskRepositoryImpl(
             if (taskDto != null) {
                 taskDto.id = taskId
                 taskDao.insert(taskDto.toEntity())
+                val requester = getRequesterForNotification(taskDto)
 
                 // Notification for helper
                 val notification = Notification(
@@ -454,8 +558,8 @@ class TaskRepositoryImpl(
                     message = "Tugas \"${taskDto.title}\" membutuhkan revisi",
                     relatedTaskId = taskId,
                     relatedTaskTitle = taskDto.title,
-                    senderName = taskDto.requesterName,
-                    senderAvatarUrl = taskDto.requesterAvatarUrl
+                    senderName = requester?.username ?: taskDto.requesterName,
+                    senderAvatarUrl = requester?.avatarUrl ?: taskDto.requesterAvatarUrl
                 )
                 notificationRepository.createNotification(notification)
             }
@@ -464,5 +568,65 @@ class TaskRepositoryImpl(
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    private suspend fun refreshRequesterStats(requesterId: String) {
+        if (requesterId.isBlank()) return
+
+        try {
+            val tasks = firestoreService
+                .queryCollection("tasks", "requesterId", requesterId)
+                .first()
+                .mapNotNull { it.toObject(TaskDto::class.java) }
+
+            val uploadedCount = tasks.size
+            val averagePoints = if (tasks.isNotEmpty()) {
+                tasks.map { it.taskPoints }.average()
+            } else {
+                0.0
+            }
+
+            firestoreService.updateDocument(
+                "users",
+                requesterId,
+                mapOf(
+                    "tasksUploaded" to uploadedCount,
+                    "averageTaskPoints" to averagePoints
+                )
+            )
+        } catch (_: Exception) { }
+    }
+
+    private suspend fun getRequesterForNotification(taskDto: TaskDto): UserDto? {
+        if (taskDto.requesterId.isBlank()) return null
+
+        return try {
+            firestoreService
+                .getDocument("users", taskDto.requesterId)
+                ?.toObject(UserDto::class.java)
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private suspend fun refreshHelperStats(helperId: String) {
+        if (helperId.isBlank()) return
+
+        try {
+            val completedTasks = firestoreService
+                .queryCollection("tasks", "helperId", helperId)
+                .first()
+                .mapNotNull { it.toObject(TaskDto::class.java) }
+                .filter { it.status == TaskStatus.ACCEPTED.name }
+
+            firestoreService.updateDocument(
+                "users",
+                helperId,
+                mapOf(
+                    "tasksCompleted" to completedTasks.size,
+                    "totalPoints" to completedTasks.sumOf { it.taskPoints }
+                )
+            )
+        } catch (_: Exception) { }
     }
 }

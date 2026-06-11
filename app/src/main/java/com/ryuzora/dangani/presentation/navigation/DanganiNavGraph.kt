@@ -26,6 +26,7 @@ import com.ryuzora.dangani.data.remote.FirebaseAuthService
 import com.ryuzora.dangani.data.remote.FirestoreService
 import com.ryuzora.dangani.data.remote.FirebaseStorageService
 import com.ryuzora.dangani.data.repository.UserRepositoryImpl
+import com.ryuzora.dangani.domain.model.NotificationType
 import com.ryuzora.dangani.domain.usecase.auth.LoginUseCase
 import com.ryuzora.dangani.domain.usecase.auth.RegisterUseCase
 
@@ -159,7 +160,10 @@ fun DanganiNavGraph(
             val taskId = backStackEntry.arguments?.getString("taskId") ?: return@composable
             WorkSubmissionScreen(
                 taskId = taskId,
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToProfile = { userId ->
+                    navController.navigate(Screen.OtherProfile.createRoute(userId))
+                }
             )
         }
 
@@ -179,7 +183,20 @@ fun DanganiNavGraph(
         composable(Screen.Notifications.route) {
             NotificationScreen(
                 onNotificationClick = { notification ->
-                    navController.navigate(Screen.TaskDetail.createRoute(notification.relatedTaskId))
+                    val taskId = notification.relatedTaskId
+                    if (taskId.isBlank()) return@NotificationScreen
+
+                    val route = when (notification.type) {
+                        NotificationType.NEW_APPLICANT -> Screen.SelectHelper.createRoute(taskId)
+                        NotificationType.WORK_SUBMITTED -> Screen.EditTask.createRoute(taskId)
+                        NotificationType.APPLICATION_ACCEPTED,
+                        NotificationType.WORK_ACCEPTED,
+                        NotificationType.WORK_REVISION,
+                        NotificationType.RATING_RECEIVED -> Screen.WorkSubmission.createRoute(taskId)
+                        NotificationType.APPLICATION_NOT_SELECTED -> Screen.TaskDetail.createRoute(taskId)
+                    }
+
+                    navController.navigate(route)
                 }
             )
         }

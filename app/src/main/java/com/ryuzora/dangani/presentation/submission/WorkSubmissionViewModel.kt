@@ -8,7 +8,10 @@ import com.ryuzora.dangani.data.remote.FirebaseStorageService
 import com.ryuzora.dangani.data.remote.FirestoreService
 import com.ryuzora.dangani.data.repository.NotificationRepositoryImpl
 import com.ryuzora.dangani.data.repository.TaskRepositoryImpl
+import com.ryuzora.dangani.data.repository.UserRepositoryImpl
 import com.ryuzora.dangani.domain.model.Task
+import com.ryuzora.dangani.domain.model.User
+import com.ryuzora.dangani.domain.usecase.profile.GetUserProfileUseCase
 import com.ryuzora.dangani.domain.usecase.submission.SubmitWorkUseCase
 import com.ryuzora.dangani.domain.usecase.task.GetTaskByIdUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,11 +19,16 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.ryuzora.dangani.data.repository.ReviewRepositoryImpl
+import com.ryuzora.dangani.domain.model.Review
+import com.ryuzora.dangani.domain.usecase.review.GetReviewByTaskIdUseCase
 
 data class WorkSubmissionUiState(
     val task: Task? = null,
+    val requester: User? = null,
     val selectedFileUri: String? = null,
     val selectedFileName: String? = null,
+    val review: Review? = null,
     val isUploading: Boolean = false,
     val isLoading: Boolean = true,
     val error: String? = null,
@@ -36,9 +44,15 @@ class WorkSubmissionViewModel(private val taskId: String) : ViewModel() {
 
     private val notificationRepo = NotificationRepositoryImpl(db.notificationDao(), firestoreService)
     private val taskRepo = TaskRepositoryImpl(db.taskDao(), db.taskApplicationDao(), firestoreService, storageService, notificationRepo)
+    private val userRepo = UserRepositoryImpl(db.userDao(), firebaseAuth, firestoreService, storageService)
+
+    private val reviewRepo = ReviewRepositoryImpl(firestoreService)
 
     private val getTaskByIdUseCase = GetTaskByIdUseCase(taskRepo)
+    private val getUserProfileUseCase = GetUserProfileUseCase(userRepo)
     private val submitWorkUseCase = SubmitWorkUseCase(taskRepo)
+
+    private val getReviewByTaskIdUseCase = GetReviewByTaskIdUseCase(reviewRepo)
 
     private val _uiState = MutableStateFlow(WorkSubmissionUiState())
     val uiState: StateFlow<WorkSubmissionUiState> = _uiState.asStateFlow()
@@ -50,8 +64,32 @@ class WorkSubmissionViewModel(private val taskId: String) : ViewModel() {
     private fun loadTask() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
+
             getTaskByIdUseCase(taskId).collect { task ->
-                _uiState.update { it.copy(task = task, isLoading = false) }
+                _uiState.update {
+                    it.copy(
+                        task = task,
+                        isLoading = false
+                    )
+                }
+
+                if (task != null) {
+                    launch {
+                        getUserProfileUseCase(task.requesterId).collect { requester ->
+                            _uiState.update {
+                                it.copy(requester = requester)
+                            }
+                        }
+                    }
+
+                    launch {
+                        getReviewByTaskIdUseCase(task.id).collect { review ->
+                            _uiState.update {
+                                it.copy(review = review)
+                            }
+                        }
+                    }
+                }
             }
         }
     }

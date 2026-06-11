@@ -53,6 +53,7 @@ import com.ryuzora.dangani.presentation.components.ButtonVariant
 import com.ryuzora.dangani.presentation.components.CategoryChip
 import com.ryuzora.dangani.presentation.components.DanganiButton
 import com.ryuzora.dangani.presentation.components.StatusBadge
+import com.ryuzora.dangani.presentation.components.TaskProfileCard
 import com.ryuzora.dangani.presentation.components.TaskPointsBadge
 import com.ryuzora.dangani.ui.theme.*
 
@@ -61,6 +62,7 @@ import com.ryuzora.dangani.ui.theme.*
 fun WorkSubmissionScreen(
     taskId: String,
     onNavigateBack: () -> Unit,
+    onNavigateToProfile: (String) -> Unit,
     viewModel: WorkSubmissionViewModel = remember { WorkSubmissionViewModel(taskId) }
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -136,6 +138,7 @@ fun WorkSubmissionScreen(
             }
             else -> {
                 val task = uiState.task!!
+                val requester = uiState.requester
                 val isLocked = task.status == TaskStatus.ACCEPTED ||
                         task.status == TaskStatus.NEED_REVIEW
 
@@ -161,26 +164,32 @@ fun WorkSubmissionScreen(
 
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    // Task info card
+// Task info card
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(14.dp),
                         colors = CardDefaults.cardColors(containerColor = CardWhite),
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
                         Column(
                             modifier = Modifier.padding(16.dp)
                         ) {
-                            // Category
-                            CategoryChip(
-                                text = task.category.displayName,
-                                isSelected = true,
-                                onClick = {}
-                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                CategoryChip(
+                                    text = task.category.displayName,
+                                    isSelected = true,
+                                    onClick = {}
+                                )
 
-                            Spacer(modifier = Modifier.height(12.dp))
+                                TaskPointsBadge(points = task.taskPoints)
+                            }
 
-                            // Description
+                            Spacer(modifier = Modifier.height(14.dp))
+
                             Text(
                                 text = task.description,
                                 style = MaterialTheme.typography.bodyMedium,
@@ -189,28 +198,15 @@ fun WorkSubmissionScreen(
 
                             Spacer(modifier = Modifier.height(14.dp))
 
-                            // Points
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                TaskPointsBadge(points = task.taskPoints)
-                                Text(
-                                    text = "Task Points",
-                                    style = MaterialTheme.typography.bodySmall.copy(
-                                        fontWeight = FontWeight.Medium
-                                    ),
-                                    color = TextSecondary
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            // Assigned by
-                            Text(
-                                text = "Assigned by ${task.requesterName}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = TextHint
+                            TaskProfileCard(
+                                name = requester?.username ?: task.requesterName,
+                                avatarUrl = requester?.avatarUrl ?: task.requesterAvatarUrl,
+                                rating = requester?.ratingAverage ?: 0.0,
+                                statsText = "${requester?.tasksUploaded ?: 0} tugas dibuat",
+                                contentDescription = "Requester Avatar",
+                                isVerified = requester?.isVerified ?: task.requesterIsVerified,
+                                enabled = task.requesterId.isNotBlank(),
+                                onClick = { onNavigateToProfile(task.requesterId) }
                             )
                         }
                     }
@@ -372,28 +368,30 @@ fun WorkSubmissionScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     // Warning notice
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(
-                                color = androidx.compose.ui.graphics.Color(0xFFFFEBEE),
-                                shape = RoundedCornerShape(12.dp)
+                    if (task.status != TaskStatus.ACCEPTED && task.status != TaskStatus.NEED_REVIEW) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    color = androidx.compose.ui.graphics.Color(0xFFFFEBEE),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                .padding(14.dp),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Warning,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp),
+                                tint = ErrorRed
                             )
-                            .padding(14.dp),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.Top
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Warning,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp),
-                            tint = ErrorRed
-                        )
-                        Text(
-                            text = "Pastikan pekerjaan sudah selesai dan sesuai dengan deskripsi tugas sebelum mengirim. Revisi mungkin diminta oleh requester.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextPrimary
-                        )
+                            Text(
+                                text = "Pastikan pekerjaan sudah selesai dan sesuai dengan deskripsi tugas sebelum mengirim. Revisi mungkin diminta oleh requester.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextPrimary
+                            )
+                        }
                     }
 
                     // Error message
@@ -426,6 +424,69 @@ fun WorkSubmissionScreen(
                                     ),
                                     color = androidx.compose.ui.graphics.Color(0xFF2E7D32)
                                 )
+                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            if (uiState.review != null) {
+                                val review = uiState.review
+
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = androidx.compose.ui.graphics.Color(0xFFE3F2FD)
+                                    ),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(16.dp)
+                                    ) {
+                                        Text(
+                                            text = "Ulasan dari Requester",
+                                            style = MaterialTheme.typography.titleMedium.copy(
+                                                fontWeight = FontWeight.Bold
+                                            ),
+                                            color = androidx.compose.ui.graphics.Color(0xFF0D47A1)
+                                        )
+
+                                        Spacer(modifier = Modifier.height(8.dp))
+
+                                        Text(
+                                            text = "Rating: ${"★".repeat(review?.rating ?: 0)} ${review?.rating ?: 0}/5",
+                                            style = MaterialTheme.typography.bodyMedium.copy(
+                                                fontWeight = FontWeight.SemiBold
+                                            ),
+                                            color = TextPrimary
+                                        )
+
+                                        Spacer(modifier = Modifier.height(6.dp))
+
+                                        Text(
+                                            text = review?.comment ?: "",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = TextSecondary
+                                        )
+                                    }
+                                }
+                            } else {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = androidx.compose.ui.graphics.Color(0xFFFFF3E0)
+                                    ),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                                ) {
+                                    Text(
+                                        text = "Belum ada ulasan dari requester.",
+                                        modifier = Modifier.padding(16.dp),
+                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                            fontWeight = FontWeight.SemiBold
+                                        ),
+                                        color = androidx.compose.ui.graphics.Color(0xFFE65100)
+                                    )
+                                }
                             }
                         }
 

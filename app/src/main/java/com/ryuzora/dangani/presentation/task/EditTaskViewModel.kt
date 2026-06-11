@@ -6,9 +6,12 @@ import com.ryuzora.dangani.DanganiApplication
 import com.ryuzora.dangani.data.remote.FirebaseAuthService
 import com.ryuzora.dangani.data.remote.FirebaseStorageService
 import com.ryuzora.dangani.data.remote.FirestoreService
+import com.ryuzora.dangani.data.remote.dto.UserDto
 import com.ryuzora.dangani.data.repository.NotificationRepositoryImpl
 import com.ryuzora.dangani.data.repository.TaskRepositoryImpl
 import com.ryuzora.dangani.data.repository.UserRepositoryImpl
+import com.ryuzora.dangani.domain.model.Notification
+import com.ryuzora.dangani.domain.model.NotificationType
 import com.ryuzora.dangani.domain.model.Task
 import com.ryuzora.dangani.domain.model.TaskCategory
 import com.ryuzora.dangani.domain.model.TaskStatus
@@ -24,6 +27,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.ryuzora.dangani.data.repository.ReviewRepositoryImpl
+import com.ryuzora.dangani.domain.model.Review
+import com.ryuzora.dangani.domain.usecase.review.CreateReviewUseCase
+import java.util.UUID
+import com.ryuzora.dangani.domain.usecase.review.GetReviewByTaskIdUseCase
 
 data class EditTaskUiState(
     val task: Task? = null,
@@ -40,7 +48,12 @@ data class EditTaskUiState(
     val isDeleting: Boolean = false,
     val error: String? = null,
     val isDeleted: Boolean = false,
-    val isSaved: Boolean = false
+    val isSaved: Boolean = false,
+    val reviewRating: Int = 5,
+    val reviewComment: String = "",
+    val isReviewSubmitting: Boolean = false,
+    val isReviewSubmitted: Boolean = false,
+    val existingReview: Review? = null
 )
 
 class EditTaskViewModel(private val taskId: String) : ViewModel() {
@@ -53,6 +66,12 @@ class EditTaskViewModel(private val taskId: String) : ViewModel() {
     private val notificationRepo = NotificationRepositoryImpl(db.notificationDao(), firestoreService)
     private val taskRepo = TaskRepositoryImpl(db.taskDao(), db.taskApplicationDao(), firestoreService, storageService, notificationRepo)
     private val userRepo = UserRepositoryImpl(db.userDao(), firebaseAuth, firestoreService, storageService)
+
+    private val reviewRepo = ReviewRepositoryImpl(firestoreService)
+
+    private val createReviewUseCase = CreateReviewUseCase(reviewRepo)
+
+    private val getReviewByTaskIdUseCase = GetReviewByTaskIdUseCase(reviewRepo)
 
     private val getTaskByIdUseCase = GetTaskByIdUseCase(taskRepo)
     private val updateTaskUseCase = UpdateTaskUseCase(taskRepo)
@@ -81,10 +100,21 @@ class EditTaskViewModel(private val taskId: String) : ViewModel() {
                             description = task.description,
                             selectedCategory = task.category,
                             selectedPoints = task.taskPoints,
-                            isEditable = task.isEditable,
+                            isEditable = task.status == TaskStatus.UNASSIGNED && task.helperId.isBlank(),
                             proofSubmitted = proofSubmitted,
                             isLoading = false
                         )
+                    }
+
+                    launch {
+                        getReviewByTaskIdUseCase(task.id).collect { review ->
+                            _uiState.update {
+                                it.copy(
+                                    existingReview = review,
+                                    isReviewSubmitted = review != null
+                                )
+                            }
+                        }
                     }
 
                     // Load helper profile if assigned
@@ -126,9 +156,34 @@ class EditTaskViewModel(private val taskId: String) : ViewModel() {
         _uiState.update { it.copy(isCategoryDropdownExpanded = false) }
     }
 
+    fun onReviewRatingChange(rating: Int) {
+        _uiState.update {
+            it.copy(
+                reviewRating = rating,
+                error = null
+            )
+        }
+    }
+
+    fun onReviewCommentChange(comment: String) {
+        _uiState.update {
+            it.copy(
+                reviewComment = comment,
+                error = null
+            )
+        }
+    }
+
     fun saveTask() {
         val state = _uiState.value
         val task = state.task ?: return
+
+        if (task.status != TaskStatus.UNASSIGNED || task.helperId.isNotBlank()) {
+            _uiState.update {
+                it.copy(error = "Task sudah memiliki helper, isi task tidak bisa diubah lagi")
+            }
+            return
+        }
 
         if (state.title.isBlank() || state.description.isBlank()) {
             _uiState.update { it.copy(error = "Judul dan deskripsi tidak boleh kosong") }
@@ -149,7 +204,12 @@ class EditTaskViewModel(private val taskId: String) : ViewModel() {
                     _uiState.update { it.copy(isSaving = false, isSaved = true) }
                 }
                 .onFailure { e ->
-                    _uiState.update { it.copy(isSaving = false, error = e.message ?: "Gagal menyimpan tugas") }
+                    _uiState.update {
+                        it.copy(
+                            isSaving = false,
+                            error = e.message ?: "Gagal menyimpan tugas"
+                        )
+                    }
                 }
         }
     }
@@ -222,6 +282,92 @@ class EditTaskViewModel(private val taskId: String) : ViewModel() {
                         )
                     }
                 }
+        }
+    }
+
+    fun submitReview() {
+        val state = _uiState.value
+        val task = state.task ?: return
+
+        if (task.status != TaskStatus.ACCEPTED) {
+            _uiState.update {
+                it.copy(error = "Ulasan hanya bisa diberikan setelah tugas diterima")
+            }
+            return
+        }
+
+        if (task.helperId.isBlank()) {
+            _uiState.update {
+                it.copy(error = "Helper tidak ditemukan")
+            }
+            return
+        }
+
+        if (state.reviewComment.isBlank()) {
+            _uiState.update {
+                it.copy(error = "Komentar ulasan tidak boleh kosong")
+            }
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isReviewSubmitting = true,
+                    error = null
+                )
+            }
+
+            val reviewer = firestoreService
+                .getDocument("users", task.requesterId)
+                ?.toObject(UserDto::class.java)
+
+            val review = Review(
+                id = UUID.randomUUID().toString(),
+                reviewerId = task.requesterId,
+                reviewerName = reviewer?.username?.takeIf { it.isNotBlank() } ?: task.requesterName,
+                reviewerAvatarUrl = reviewer?.avatarUrl?.takeIf { it.isNotBlank() } ?: task.requesterAvatarUrl,
+                revieweeId = task.helperId,
+                taskId = task.id,
+                rating = state.reviewRating,
+                comment = state.reviewComment.trim(),
+                createdAt = System.currentTimeMillis()
+            )
+
+            val result = createReviewUseCase(review)
+            if (result.isSuccess) {
+                notificationRepo.createNotification(
+                    Notification(
+                        userId = task.helperId,
+                        role = "helper",
+                        type = NotificationType.RATING_RECEIVED,
+                        title = NotificationType.RATING_RECEIVED.displayName,
+                        message = "${review.reviewerName.ifBlank { "Requester" }} memberi rating ${review.rating}/5 untuk \"${task.title}\"",
+                        relatedTaskId = task.id,
+                        relatedTaskTitle = task.title,
+                        senderName = review.reviewerName,
+                        senderAvatarUrl = review.reviewerAvatarUrl
+                    )
+                )
+
+                _uiState.update {
+                    it.copy(
+                        isReviewSubmitting = false,
+                        isReviewSubmitted = true,
+                        existingReview = review,
+                        reviewComment = "",
+                        reviewRating = 5
+                    )
+                }
+            } else {
+                val e = result.exceptionOrNull()
+                _uiState.update {
+                    it.copy(
+                        isReviewSubmitting = false,
+                        error = e?.message ?: "Gagal mengirim ulasan"
+                    )
+                }
+            }
         }
     }
 }

@@ -50,6 +50,7 @@ import com.ryuzora.dangani.presentation.components.ButtonVariant
 import com.ryuzora.dangani.presentation.components.CategoryChip
 import com.ryuzora.dangani.presentation.components.DanganiButton
 import com.ryuzora.dangani.presentation.components.StatusBadge
+import com.ryuzora.dangani.presentation.components.TaskProfileCard
 import com.ryuzora.dangani.presentation.components.TaskPointsBadge
 import com.ryuzora.dangani.presentation.components.VerifiedBadge
 import com.ryuzora.dangani.ui.theme.*
@@ -198,6 +199,16 @@ fun TaskDetailScreen(
 
                     // Requester profile card
                     if (requester != null) {
+                        TaskProfileCard(
+                            name = requester.username,
+                            avatarUrl = requester.avatarUrl,
+                            rating = requester.ratingAverage,
+                            statsText = "${requester.tasksUploaded} tugas",
+                            contentDescription = "Requester Avatar",
+                            isVerified = requester.isVerified,
+                            onClick = { onNavigateToProfile(requester.id) }
+                        )
+                        if (false) {
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -298,6 +309,7 @@ fun TaskDetailScreen(
                                     modifier = Modifier.size(24.dp)
                                 )
                             }
+                        }
                         }
                     }
 

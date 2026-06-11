@@ -32,6 +32,8 @@ fun ReviewCard(
     review: Review,
     modifier: Modifier = Modifier
 ) {
+    val reviewerName = review.reviewerName.ifBlank { "Pengguna" }
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -58,12 +60,12 @@ fun ReviewCard(
                         contentScale = ContentScale.Crop
                     )
                 } else {
-                    AvatarPlaceholder(name = review.reviewerName, size = 36.dp)
+                    AvatarPlaceholder(name = reviewerName, size = 36.dp)
                 }
 
                 Column {
                     Text(
-                        text = review.reviewerName,
+                        text = reviewerName,
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontWeight = FontWeight.SemiBold
                         ),

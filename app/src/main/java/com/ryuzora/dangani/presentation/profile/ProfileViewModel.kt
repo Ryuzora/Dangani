@@ -6,14 +6,18 @@ import com.ryuzora.dangani.DanganiApplication
 import com.ryuzora.dangani.data.remote.FirebaseAuthService
 import com.ryuzora.dangani.data.remote.FirebaseStorageService
 import com.ryuzora.dangani.data.remote.FirestoreService
+import com.ryuzora.dangani.data.remote.dto.ReviewDto
+import com.ryuzora.dangani.data.remote.dto.TaskDto
 import com.ryuzora.dangani.data.repository.SearchRepositoryImpl
 import com.ryuzora.dangani.data.repository.UserRepositoryImpl
 import com.ryuzora.dangani.domain.model.Review
+import com.ryuzora.dangani.domain.model.TaskStatus
 import com.ryuzora.dangani.domain.model.User
 import com.ryuzora.dangani.domain.usecase.auth.LogoutUseCase
 import com.ryuzora.dangani.domain.usecase.profile.GetUserProfileUseCase
 import com.ryuzora.dangani.domain.usecase.profile.GetUserReviewsUseCase
 import com.ryuzora.dangani.domain.usecase.profile.UploadProfilePhotoUseCase
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -62,12 +66,17 @@ class ProfileViewModel(
 
         // Load user profile
         viewModelScope.launch {
+            var didRefreshStats = false
             getUserProfileUseCase(userId)
                 .catch { e ->
                     _uiState.update { it.copy(error = e.message, isLoading = false) }
                 }
                 .collect { user ->
                     _uiState.update { it.copy(user = user, isLoading = false) }
+                    if (user != null && !didRefreshStats) {
+                        didRefreshStats = true
+                        refreshProfileStats(userId)
+                    }
                 }
         }
 
@@ -77,10 +86,66 @@ class ProfileViewModel(
                 .catch { /* silently handle */ }
                 .collect { reviews ->
                     _uiState.update {
-                        it.copy(reviews = reviews.sortedByDescending { r -> r.createdAt })
+                        it.copy(reviews = reviews.latestReviewPerTask())
                     }
                 }
         }
+    }
+
+    private suspend fun refreshProfileStats(userId: String) {
+        try {
+            val requesterTasks = firestoreService
+                .queryCollection("tasks", "requesterId", userId)
+                .first()
+                .mapNotNull { it.toObject(TaskDto::class.java) }
+
+            val completedHelperTasks = firestoreService
+                .queryCollection("tasks", "helperId", userId)
+                .first()
+                .mapNotNull { it.toObject(TaskDto::class.java) }
+                .filter { it.status == TaskStatus.ACCEPTED.name }
+
+            val reviews = firestoreService
+                .queryCollection("reviews", "revieweeId", userId)
+                .first()
+                .mapNotNull { it.toObject(ReviewDto::class.java) }
+                .latestReviewDtoPerTask()
+
+            val stats = mapOf(
+                "tasksUploaded" to requesterTasks.size,
+                "averageTaskPoints" to if (requesterTasks.isNotEmpty()) requesterTasks.map { it.taskPoints }.average() else 0.0,
+                "tasksCompleted" to completedHelperTasks.size,
+                "totalPoints" to completedHelperTasks.sumOf { it.taskPoints },
+                "ratingAverage" to if (reviews.isNotEmpty()) reviews.map { it.rating }.average() else 0.0
+            )
+
+            firestoreService.updateDocument("users", userId, stats)
+
+            _uiState.update { state ->
+                state.copy(
+                    user = state.user?.copy(
+                        tasksUploaded = stats["tasksUploaded"] as Int,
+                        averageTaskPoints = stats["averageTaskPoints"] as Double,
+                        tasksCompleted = stats["tasksCompleted"] as Int,
+                        totalPoints = stats["totalPoints"] as Int,
+                        ratingAverage = stats["ratingAverage"] as Double
+                    )
+                )
+            }
+        } catch (_: Exception) { }
+    }
+
+    private fun List<Review>.latestReviewPerTask(): List<Review> {
+        return groupBy { it.taskId.ifBlank { it.id } }
+            .values
+            .mapNotNull { reviews -> reviews.maxByOrNull { it.createdAt } }
+            .sortedByDescending { it.createdAt }
+    }
+
+    private fun List<ReviewDto>.latestReviewDtoPerTask(): List<ReviewDto> {
+        return groupBy { it.taskId.ifBlank { it.id } }
+            .values
+            .mapNotNull { reviews -> reviews.maxByOrNull { it.createdAt } }
     }
 
     fun uploadPhoto(imageUri: String) {
