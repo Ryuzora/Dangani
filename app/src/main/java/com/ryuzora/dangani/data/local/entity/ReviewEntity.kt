@@ -16,3 +16,4 @@ data class ReviewEntity(
     val comment: String = "",
     val createdAt: Long = System.currentTimeMillis()
 )
+

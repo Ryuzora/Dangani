@@ -22,3 +22,4 @@ interface SearchHistoryDao {
     @Query("DELETE FROM search_history")
     suspend fun deleteAll()
 }
+

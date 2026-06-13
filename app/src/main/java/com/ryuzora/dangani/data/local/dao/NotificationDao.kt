@@ -28,3 +28,4 @@ interface NotificationDao {
     @Query("DELETE FROM notifications WHERE id = :notificationId")
     suspend fun deleteById(notificationId: String)
 }
+

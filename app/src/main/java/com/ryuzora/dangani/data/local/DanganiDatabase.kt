@@ -29,7 +29,7 @@ import com.ryuzora.dangani.data.local.entity.UserEntity
         SearchHistoryEntity::class,
         FavoriteEntity::class
     ],
-    version = 1,
+    version = 3,
     exportSchema = false
 )
 abstract class DanganiDatabase : RoomDatabase() {
@@ -60,3 +60,4 @@ abstract class DanganiDatabase : RoomDatabase() {
         }
     }
 }
+

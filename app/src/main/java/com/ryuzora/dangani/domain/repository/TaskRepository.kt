@@ -28,5 +28,5 @@ interface TaskRepository {
     // Submissions
     suspend fun submitWork(taskId: String, fileUri: String): Result<String>
     suspend fun acceptWork(taskId: String): Result<Unit>
-    suspend fun requestRevision(taskId: String): Result<Unit>
+    suspend fun requestRevision(taskId: String, revisionNote: String): Result<Unit>
 }

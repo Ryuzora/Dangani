@@ -17,3 +17,4 @@ data class TaskApplicationEntity(
     val status: String = "pending",
     val appliedAt: Long = System.currentTimeMillis()
 )
+

@@ -11,3 +11,4 @@ data class SearchHistoryEntity(
     val query: String = "",
     val searchedAt: Long = System.currentTimeMillis()
 )
+

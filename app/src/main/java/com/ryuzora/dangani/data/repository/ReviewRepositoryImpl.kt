@@ -95,3 +95,4 @@ class ReviewRepositoryImpl(
             .mapNotNull { reviews -> reviews.maxByOrNull { it.createdAt } }
     }
 }
+

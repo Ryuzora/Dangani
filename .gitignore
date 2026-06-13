@@ -13,3 +13,8 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Firebase and Google Services credentials
+google-services.json
+fcm_service_account.json
+app/src/main/res/raw/fcm_service_account.json

@@ -16,3 +16,4 @@ class SearchTasksUseCase(
         return taskRepository.searchTasks(query)
     }
 }
+

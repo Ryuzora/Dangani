@@ -17,6 +17,7 @@ fun UserEntity.toDomain(): User = User(
     averageTaskPoints = averageTaskPoints,
     whatsapp = whatsapp,
     instagram = instagram,
+    fcmToken = fcmToken,
     createdAt = createdAt
 )
 
@@ -33,6 +34,7 @@ fun User.toEntity(): UserEntity = UserEntity(
     averageTaskPoints = averageTaskPoints,
     whatsapp = whatsapp,
     instagram = instagram,
+    fcmToken = fcmToken,
     createdAt = createdAt
 )
 
@@ -49,6 +51,7 @@ fun UserDto.toEntity(): UserEntity = UserEntity(
     averageTaskPoints = averageTaskPoints,
     whatsapp = whatsapp,
     instagram = instagram,
+    fcmToken = fcmToken,
     createdAt = createdAt
 )
 
@@ -65,6 +68,7 @@ fun UserDto.toDomain(): User = User(
     averageTaskPoints = averageTaskPoints,
     whatsapp = whatsapp,
     instagram = instagram,
+    fcmToken = fcmToken,
     createdAt = createdAt
 )
 
@@ -81,6 +85,7 @@ fun User.toDto(): UserDto = UserDto(
     averageTaskPoints = averageTaskPoints,
     whatsapp = whatsapp,
     instagram = instagram,
+    fcmToken = fcmToken,
     createdAt = createdAt
 )
 
@@ -97,5 +102,6 @@ fun User.toFirestoreMap(): Map<String, Any?> = mapOf(
     "averageTaskPoints" to averageTaskPoints,
     "whatsapp" to whatsapp,
     "instagram" to instagram,
+    "fcmToken" to fcmToken,
     "createdAt" to createdAt
 )

@@ -7,3 +7,4 @@ class AcceptWorkUseCase(private val taskRepository: TaskRepository) {
         return taskRepository.acceptWork(taskId)
     }
 }
+

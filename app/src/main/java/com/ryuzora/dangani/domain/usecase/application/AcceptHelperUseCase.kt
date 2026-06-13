@@ -7,3 +7,4 @@ class AcceptHelperUseCase(private val taskRepository: TaskRepository) {
         return taskRepository.acceptHelper(taskId, helperId)
     }
 }
+

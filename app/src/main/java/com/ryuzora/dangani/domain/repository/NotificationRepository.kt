@@ -9,3 +9,4 @@ interface NotificationRepository {
     suspend fun markAsRead(notificationId: String): Result<Unit>
     suspend fun createNotification(notification: Notification): Result<Unit>
 }
+

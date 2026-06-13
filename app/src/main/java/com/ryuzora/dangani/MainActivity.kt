@@ -1,7 +1,12 @@
 package com.ryuzora.dangani
 
 import android.os.Bundle
+import android.os.Build
+import android.Manifest
+import android.content.pm.PackageManager
 import androidx.activity.ComponentActivity
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,20 +22,66 @@ import com.ryuzora.dangani.data.remote.FirebaseAuthService
 import com.ryuzora.dangani.data.remote.FirestoreService
 import com.ryuzora.dangani.data.remote.FirebaseStorageService
 import com.ryuzora.dangani.data.repository.NotificationRepositoryImpl
-import com.ryuzora.dangani.presentation.navigation.BottomNavBar
-import com.ryuzora.dangani.presentation.navigation.DanganiNavGraph
-import com.ryuzora.dangani.presentation.navigation.Screen
+import com.ryuzora.dangani.presentation.view.navigation.BottomNavBar
+import com.ryuzora.dangani.presentation.view.navigation.DanganiNavGraph
+import com.ryuzora.dangani.presentation.view.navigation.Screen
 import com.ryuzora.dangani.ui.theme.DanganiTheme
+import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
+import androidx.compose.runtime.collectAsState
+import com.ryuzora.dangani.ui.theme.ThemeManager
+
 class MainActivity : ComponentActivity() {
+
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            syncFcmToken()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val themeManager = ThemeManager.getInstance(this)
+        
+        askNotificationPermission()
+        syncFcmToken()
+        
         setContent {
-            DanganiTheme {
+            val isDarkMode by themeManager.isDarkMode.collectAsState()
+            
+            DanganiTheme(darkTheme = isDarkMode) {
                 DanganiApp()
+            }
+        }
+    }
+
+    private fun askNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+                // FCM SDK (and your app) can post notifications.
+            } else if (shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+
+    private fun syncFcmToken() {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser != null) {
+            FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+                if (!task.isSuccessful) return@addOnCompleteListener
+                val token = task.result
+                val firestoreService = FirestoreService()
+                kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                    firestoreService.updateDocument("users", currentUser.uid, mapOf("fcmToken" to token))
+                }
             }
         }
     }

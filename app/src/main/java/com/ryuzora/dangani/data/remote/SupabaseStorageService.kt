@@ -5,6 +5,7 @@ import com.ryuzora.dangani.DanganiApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -14,8 +15,8 @@ import java.util.concurrent.TimeUnit
 class SupabaseStorageService {
 
     companion object {
-        private const val PROJECT_URL = "https://junxbnbydtuakzwxovbg.supabase.co"
-        private const val ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp1bnhibmJ5ZHR1YWt6d3hvdmJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwNzczNTMsImV4cCI6MjA5NjY1MzM1M30.9NhZnlNtGBMfLoJ0JeypDYSFgGj4u6rticHy7drtVTs"
+        private val PROJECT_URL = com.ryuzora.dangani.BuildConfig.SUPABASE_URL
+        private val ANON_KEY = com.ryuzora.dangani.BuildConfig.SUPABASE_ANON_KEY
     }
 
     private val client = OkHttpClient.Builder()
@@ -50,8 +51,8 @@ class SupabaseStorageService {
 
                     // Determine content type
                     val contentType = context.contentResolver.getType(fileUri) ?: "application/octet-stream"
-
-                    val requestBody = tempFile.asRequestBody(contentType.toMediaType())
+                    val mediaType = contentType.toMediaTypeOrNull() ?: "application/octet-stream".toMediaType()
+                    val requestBody = tempFile.asRequestBody(mediaType)
 
                     val request = Request.Builder()
                         .url("$PROJECT_URL/storage/v1/object/$bucket/$path")
@@ -103,3 +104,4 @@ class SupabaseStorageService {
         }
     }
 }
+

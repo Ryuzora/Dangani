@@ -27,6 +27,8 @@ data class UserDto(
     var whatsapp: String = "",
     @get:PropertyName("instagram") @set:PropertyName("instagram")
     var instagram: String = "",
+    @get:PropertyName("fcmToken") @set:PropertyName("fcmToken")
+    var fcmToken: String = "",
     @get:PropertyName("createdAt") @set:PropertyName("createdAt")
     var createdAt: Long = System.currentTimeMillis()
 )

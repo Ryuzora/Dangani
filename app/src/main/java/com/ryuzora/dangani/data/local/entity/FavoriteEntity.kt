@@ -8,3 +8,4 @@ data class FavoriteEntity(
     val taskId: String = "",
     val createdAt: Long = System.currentTimeMillis()
 )
+

@@ -8,3 +8,4 @@ class GetSearchHistoryUseCase(private val searchRepository: SearchRepository) {
         return searchRepository.getRecentSearches(userId)
     }
 }
+

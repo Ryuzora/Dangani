@@ -9,3 +9,4 @@ enum class NotificationType(val displayName: String) {
     WORK_REVISION("Pekerjaan Revisi!"),
     RATING_RECEIVED("Rating Diterima")
 }
+

@@ -31,6 +31,8 @@ data class TaskDto(
     var helperAvatarUrl: String = "",
     @get:PropertyName("proofOfWorkUrl") @set:PropertyName("proofOfWorkUrl")
     var proofOfWorkUrl: String = "",
+    @get:PropertyName("revisionNote") @set:PropertyName("revisionNote")
+    var revisionNote: String = "",
     @get:PropertyName("applicantCount") @set:PropertyName("applicantCount")
     var applicantCount: Int = 0,
     @get:PropertyName("createdAt") @set:PropertyName("createdAt")
@@ -38,3 +40,4 @@ data class TaskDto(
     @get:PropertyName("updatedAt") @set:PropertyName("updatedAt")
     var updatedAt: Long = System.currentTimeMillis()
 )
+

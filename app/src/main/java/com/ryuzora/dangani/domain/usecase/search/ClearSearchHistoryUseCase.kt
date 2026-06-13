@@ -7,3 +7,4 @@ class ClearSearchHistoryUseCase(private val searchRepository: SearchRepository) 
         searchRepository.clearSearchHistory(userId)
     }
 }
+

@@ -12,3 +12,4 @@ data class TaskApplication(
     val status: String = "pending", // pending, accepted, rejected
     val appliedAt: Long = System.currentTimeMillis()
 )
+

@@ -24,3 +24,4 @@ data class TaskApplicationDto(
     @get:PropertyName("appliedAt") @set:PropertyName("appliedAt")
     var appliedAt: Long = System.currentTimeMillis()
 )
+

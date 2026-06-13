@@ -9,3 +9,4 @@ class GetCurrentUserUseCase(private val userRepository: UserRepository) {
         return userRepository.getCurrentUserProfile()
     }
 }
+

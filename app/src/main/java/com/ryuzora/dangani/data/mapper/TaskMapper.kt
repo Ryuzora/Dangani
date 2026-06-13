@@ -21,6 +21,7 @@ fun TaskEntity.toDomain(): Task = Task(
     helperName = helperName,
     helperAvatarUrl = helperAvatarUrl,
     proofOfWorkUrl = proofOfWorkUrl,
+    revisionNote = revisionNote,
     applicantCount = applicantCount,
     createdAt = createdAt,
     updatedAt = updatedAt
@@ -41,6 +42,7 @@ fun Task.toEntity(): TaskEntity = TaskEntity(
     helperName = helperName,
     helperAvatarUrl = helperAvatarUrl,
     proofOfWorkUrl = proofOfWorkUrl,
+    revisionNote = revisionNote,
     applicantCount = applicantCount,
     createdAt = createdAt,
     updatedAt = updatedAt
@@ -61,6 +63,7 @@ fun TaskDto.toEntity(): TaskEntity = TaskEntity(
     helperName = helperName,
     helperAvatarUrl = helperAvatarUrl,
     proofOfWorkUrl = proofOfWorkUrl,
+    revisionNote = revisionNote,
     applicantCount = applicantCount,
     createdAt = createdAt,
     updatedAt = updatedAt
@@ -81,6 +84,7 @@ fun TaskDto.toDomain(): Task = Task(
     helperName = helperName,
     helperAvatarUrl = helperAvatarUrl,
     proofOfWorkUrl = proofOfWorkUrl,
+    revisionNote = revisionNote,
     applicantCount = applicantCount,
     createdAt = createdAt,
     updatedAt = updatedAt
@@ -101,6 +105,7 @@ fun Task.toDto(): TaskDto = TaskDto(
     helperName = helperName,
     helperAvatarUrl = helperAvatarUrl,
     proofOfWorkUrl = proofOfWorkUrl,
+    revisionNote = revisionNote,
     applicantCount = applicantCount,
     createdAt = createdAt,
     updatedAt = updatedAt
@@ -121,7 +126,9 @@ fun Task.toFirestoreMap(): Map<String, Any?> = mapOf(
     "helperName" to helperName,
     "helperAvatarUrl" to helperAvatarUrl,
     "proofOfWorkUrl" to proofOfWorkUrl,
+    "revisionNote" to revisionNote,
     "applicantCount" to applicantCount,
     "createdAt" to createdAt,
     "updatedAt" to updatedAt
 )
+
