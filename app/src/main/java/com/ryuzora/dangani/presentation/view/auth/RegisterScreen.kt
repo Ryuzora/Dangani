@@ -50,6 +50,7 @@ fun RegisterScreen(
 
     LaunchedEffect(uiState.isAuthenticated) {
         if (uiState.isAuthenticated) {
+            viewModel.resetState()
             onRegisterSuccess()
         }
     }

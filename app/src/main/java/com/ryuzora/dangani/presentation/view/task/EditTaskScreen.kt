@@ -734,11 +734,11 @@ fun EditTaskScreen(
                 )
             },
             dismissButton = {
-                TextButton(
-                    onClick = { showRevisionDialog = false }
-                ) {
-                    Text("Batal")
-                }
+                DanganiButton(
+                    text = "Batal",
+                    onClick = { showRevisionDialog = false },
+                    variant = ButtonVariant.SECONDARY
+                )
             },
             containerColor = MaterialTheme.colorScheme.surface,
             shape = RoundedCornerShape(16.dp)

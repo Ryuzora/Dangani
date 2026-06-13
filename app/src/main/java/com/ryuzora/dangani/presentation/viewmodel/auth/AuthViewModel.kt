@@ -51,6 +51,10 @@ class AuthViewModel(
         _uiState.update { it.copy(confirmPassword = confirmPassword, confirmPasswordError = null, generalError = null) }
     }
 
+    fun reset() {
+        _uiState.value = AuthUiState()
+    }
+
     fun togglePasswordVisibility() {
         _uiState.update { it.copy(isPasswordVisible = !it.isPasswordVisible) }
     }

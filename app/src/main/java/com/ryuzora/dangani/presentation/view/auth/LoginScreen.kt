@@ -49,6 +49,7 @@ fun LoginScreen(
 
     LaunchedEffect(uiState.isAuthenticated) {
         if (uiState.isAuthenticated) {
+            viewModel.resetState()
             onLoginSuccess()
         }
     }
