@@ -1,6 +1,7 @@
 package com.ryuzora.dangani.data.remote
 
 import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.channels.awaitClose
@@ -46,6 +47,15 @@ class FirestoreService {
 
     suspend fun updateDocument(collectionName: String, documentId: String, data: Map<String, Any?>) {
         firestore.collection(collectionName).document(documentId).update(data).await()
+    }
+
+    suspend fun registerFcmToken(userId: String, token: String) {
+        firestore.collection("users").document(userId).update(
+            mapOf(
+                "fcmToken" to token,
+                "fcmTokens" to FieldValue.arrayUnion(token)
+            )
+        ).await()
     }
 
     suspend fun deleteDocument(collectionName: String, documentId: String) {

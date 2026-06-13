@@ -1,4 +1,4 @@
-package com.ryuzora.dangani.presentation.task
+package com.ryuzora.dangani.presentation.view.task
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -46,13 +46,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
-import com.ryuzora.dangani.presentation.components.ButtonVariant
-import com.ryuzora.dangani.presentation.components.CategoryChip
-import com.ryuzora.dangani.presentation.components.DanganiButton
-import com.ryuzora.dangani.presentation.components.StatusBadge
-import com.ryuzora.dangani.presentation.components.TaskProfileCard
-import com.ryuzora.dangani.presentation.components.TaskPointsBadge
-import com.ryuzora.dangani.presentation.components.VerifiedBadge
+import com.ryuzora.dangani.presentation.view.components.ButtonVariant
+import com.ryuzora.dangani.presentation.view.components.CategoryChip
+import com.ryuzora.dangani.presentation.view.components.DanganiButton
+import com.ryuzora.dangani.presentation.view.components.StatusBadge
+import com.ryuzora.dangani.presentation.view.components.TaskProfileCard
+import com.ryuzora.dangani.presentation.view.components.TaskPointsBadge
+import com.ryuzora.dangani.presentation.view.components.VerifiedBadge
+import com.ryuzora.dangani.presentation.viewmodel.task.TaskDetailViewModel
 import com.ryuzora.dangani.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -208,109 +209,6 @@ fun TaskDetailScreen(
                             isVerified = requester.isVerified,
                             onClick = { onNavigateToProfile(requester.id) }
                         )
-                        if (false) {
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onNavigateToProfile(requester.id) },
-                            shape = RoundedCornerShape(12.dp),
-                            colors = CardDefaults.cardColors(containerColor = CardWhite),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(14.dp)
-                            ) {
-                                // Avatar
-                                if (requester.avatarUrl.isNotBlank()) {
-                                    AsyncImage(
-                                        model = requester.avatarUrl,
-                                        contentDescription = "Requester Avatar",
-                                        modifier = Modifier
-                                            .size(50.dp)
-                                            .clip(CircleShape),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                } else {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(50.dp)
-                                            .background(DanganiBlue.copy(alpha = 0.1f), CircleShape),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = requester.username.take(1).uppercase(),
-                                            style = MaterialTheme.typography.titleLarge.copy(
-                                                fontWeight = FontWeight.Bold
-                                            ),
-                                            color = DanganiBlue
-                                        )
-                                    }
-                                }
-
-                                // Info
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        Text(
-                                            text = requester.username,
-                                            style = MaterialTheme.typography.titleMedium.copy(
-                                                fontWeight = FontWeight.Bold
-                                            ),
-                                            color = TextPrimary,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                        if (requester.isVerified) {
-                                            VerifiedBadge()
-                                        }
-                                    }
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Filled.Star,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(14.dp),
-                                            tint = androidx.compose.ui.graphics.Color(0xFFFFB300)
-                                        )
-                                        Text(
-                                            text = String.format("%.1f", requester.ratingAverage),
-                                            style = MaterialTheme.typography.bodySmall.copy(
-                                                fontWeight = FontWeight.SemiBold
-                                            ),
-                                            color = TextPrimary
-                                        )
-                                        Text(
-                                            text = "•",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = TextSecondary
-                                        )
-                                        Text(
-                                            text = "${requester.tasksUploaded} tugas",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = TextSecondary
-                                        )
-                                    }
-                                }
-
-                                // Arrow
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                    contentDescription = "View Profile",
-                                    tint = TextSecondary,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
-                        }
-                        }
                     }
 
                     Spacer(modifier = Modifier.height(28.dp))

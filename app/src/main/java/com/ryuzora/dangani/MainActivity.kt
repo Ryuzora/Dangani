@@ -17,17 +17,14 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.google.firebase.auth.FirebaseAuth
-import com.ryuzora.dangani.data.local.DanganiDatabase
-import com.ryuzora.dangani.data.remote.FirebaseAuthService
 import com.ryuzora.dangani.data.remote.FirestoreService
-import com.ryuzora.dangani.data.remote.FirebaseStorageService
 import com.ryuzora.dangani.data.repository.NotificationRepositoryImpl
 import com.ryuzora.dangani.presentation.view.navigation.BottomNavBar
 import com.ryuzora.dangani.presentation.view.navigation.DanganiNavGraph
 import com.ryuzora.dangani.presentation.view.navigation.Screen
 import com.ryuzora.dangani.ui.theme.DanganiTheme
 import com.google.firebase.messaging.FirebaseMessaging
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 import androidx.compose.runtime.collectAsState
@@ -80,7 +77,7 @@ class MainActivity : ComponentActivity() {
                 val token = task.result
                 val firestoreService = FirestoreService()
                 kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
-                    firestoreService.updateDocument("users", currentUser.uid, mapOf("fcmToken" to token))
+                    firestoreService.registerFcmToken(currentUser.uid, token)
                 }
             }
         }
@@ -117,13 +114,17 @@ fun DanganiApp() {
             val firestoreService = FirestoreService()
             val notifRepo = NotificationRepositoryImpl(db.notificationDao(), firestoreService)
 
-            launch {
-                notifRepo.getUnreadCount(userId, "requester").collectLatest { requesterCount ->
-                    notifRepo.getUnreadCount(userId, "helper").collectLatest { helperCount ->
-                        notificationCount = requesterCount + helperCount
-                    }
-                }
+            combine(
+                notifRepo.getNotifications(userId, "requester"),
+                notifRepo.getNotifications(userId, "helper")
+            ) { requesterNotifications, helperNotifications ->
+                requesterNotifications.count { !it.isRead } +
+                    helperNotifications.count { !it.isRead }
+            }.collect { unreadCount ->
+                notificationCount = unreadCount
             }
+        } else {
+            notificationCount = 0
         }
     }
 

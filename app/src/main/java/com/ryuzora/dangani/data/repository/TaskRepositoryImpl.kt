@@ -329,7 +329,7 @@ class TaskRepositoryImpl(
                     senderName = helperDto?.username ?: "",
                     senderAvatarUrl = helperDto?.avatarUrl ?: ""
                 )
-                createAndSendNotification(notification, taskDto.requesterId)
+                createAndSendNotification(notification)
             }
 
             Result.success(Unit)
@@ -406,7 +406,7 @@ class TaskRepositoryImpl(
                             senderName = requester?.username ?: taskDto.requesterName,
                             senderAvatarUrl = requester?.avatarUrl ?: taskDto.requesterAvatarUrl
                         )
-                        createAndSendNotification(notSelectedNotification, applicationDto.helperId)
+                        createAndSendNotification(notSelectedNotification)
                     }
                 }
             }
@@ -424,7 +424,7 @@ class TaskRepositoryImpl(
                 senderName = requester?.username ?: taskDto?.requesterName ?: "",
                 senderAvatarUrl = requester?.avatarUrl ?: taskDto?.requesterAvatarUrl ?: ""
             )
-            createAndSendNotification(notification, helperId)
+            createAndSendNotification(notification)
 
             Result.success(Unit)
         } catch (e: Exception) {
@@ -485,7 +485,7 @@ class TaskRepositoryImpl(
                     senderName = taskDto.helperName,
                     senderAvatarUrl = taskDto.helperAvatarUrl
                 )
-                createAndSendNotification(notification, taskDto.requesterId)
+                createAndSendNotification(notification)
             }
 
             Result.success(publicUrl)
@@ -523,7 +523,7 @@ class TaskRepositoryImpl(
                     senderName = requester?.username ?: taskDto.requesterName,
                     senderAvatarUrl = requester?.avatarUrl ?: taskDto.requesterAvatarUrl
                 )
-                createAndSendNotification(notification, taskDto.helperId)
+                createAndSendNotification(notification)
             }
 
             Result.success(Unit)
@@ -562,7 +562,7 @@ class TaskRepositoryImpl(
                     senderName = requester?.username ?: taskDto.requesterName,
                     senderAvatarUrl = requester?.avatarUrl ?: taskDto.requesterAvatarUrl
                 )
-                createAndSendNotification(notification, taskDto.helperId)
+                createAndSendNotification(notification)
             }
 
             Result.success(Unit)
@@ -598,26 +598,8 @@ class TaskRepositoryImpl(
         } catch (_: Exception) { }
     }
 
-    private suspend fun createAndSendNotification(notification: Notification, targetUserId: String) {
-        // Save to database
+    private suspend fun createAndSendNotification(notification: Notification) {
         notificationRepository.createNotification(notification)
-        
-        // Fetch target user's FCM token and send push notification
-        try {
-            val targetUserDoc = firestoreService.getDocument("users", targetUserId)?.toObject(com.ryuzora.dangani.data.remote.dto.UserDto::class.java)
-            val fcmToken = targetUserDoc?.fcmToken
-            if (!fcmToken.isNullOrEmpty()) {
-                val context = com.ryuzora.dangani.DanganiApplication.instance
-                com.ryuzora.dangani.data.remote.fcm.FcmSender.sendPushNotification(
-                    context = context,
-                    targetToken = fcmToken,
-                    title = notification.title,
-                    body = notification.message
-                )
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
     }
 
     private suspend fun getRequesterForNotification(taskDto: TaskDto): UserDto? {

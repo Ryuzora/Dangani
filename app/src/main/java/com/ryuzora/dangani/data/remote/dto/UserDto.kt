@@ -29,6 +29,8 @@ data class UserDto(
     var instagram: String = "",
     @get:PropertyName("fcmToken") @set:PropertyName("fcmToken")
     var fcmToken: String = "",
+    @get:PropertyName("fcmTokens") @set:PropertyName("fcmTokens")
+    var fcmTokens: List<String> = emptyList(),
     @get:PropertyName("createdAt") @set:PropertyName("createdAt")
     var createdAt: Long = System.currentTimeMillis()
 )

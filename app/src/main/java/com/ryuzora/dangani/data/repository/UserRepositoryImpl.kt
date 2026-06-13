@@ -1,6 +1,7 @@
 package com.ryuzora.dangani.data.repository
 
 import android.net.Uri
+import com.google.firebase.messaging.FirebaseMessaging
 import com.ryuzora.dangani.data.local.dao.UserDao
 import com.ryuzora.dangani.data.mapper.toDomain
 import com.ryuzora.dangani.data.mapper.toEntity
@@ -17,6 +18,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 class UserRepositoryImpl(
     private val userDao: UserDao,
@@ -43,6 +45,7 @@ class UserRepositoryImpl(
                     userDto.id = userId
                     val entity = userDto.toEntity()
                     userDao.insert(entity)
+                    syncFcmToken(userId)
                     Result.success(entity.toDomain())
                 } else {
                     Result.failure(Exception("Failed to parse user data"))
@@ -56,6 +59,7 @@ class UserRepositoryImpl(
                 )
                 firestoreService.setDocument("users", userId, newUser.toFirestoreMap())
                 userDao.insert(newUser.toEntity())
+                syncFcmToken(userId)
                 Result.success(newUser)
             }
         } catch (e: Exception) {
@@ -81,6 +85,7 @@ class UserRepositoryImpl(
 
             // Save to Room
             userDao.insert(newUser.toEntity())
+            syncFcmToken(userId)
 
             Result.success(newUser)
         } catch (e: Exception) {
@@ -154,6 +159,13 @@ class UserRepositoryImpl(
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    private suspend fun syncFcmToken(userId: String) {
+        try {
+            val token = FirebaseMessaging.getInstance().token.await()
+            firestoreService.registerFcmToken(userId, token)
+        } catch (_: Exception) { }
     }
 }
 

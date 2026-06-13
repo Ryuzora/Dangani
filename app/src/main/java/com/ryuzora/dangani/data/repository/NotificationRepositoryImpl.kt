@@ -1,11 +1,14 @@
 package com.ryuzora.dangani.data.repository
 
+import com.ryuzora.dangani.DanganiApplication
 import com.ryuzora.dangani.data.local.dao.NotificationDao
 import com.ryuzora.dangani.data.mapper.toDomain
 import com.ryuzora.dangani.data.mapper.toEntity
 import com.ryuzora.dangani.data.mapper.toFirestoreMap
 import com.ryuzora.dangani.data.remote.FirestoreService
 import com.ryuzora.dangani.data.remote.dto.NotificationDto
+import com.ryuzora.dangani.data.remote.dto.UserDto
+import com.ryuzora.dangani.data.remote.fcm.FcmSender
 import com.ryuzora.dangani.domain.model.Notification
 import com.ryuzora.dangani.domain.repository.NotificationRepository
 import kotlinx.coroutines.CoroutineScope
@@ -66,11 +69,33 @@ class NotificationRepositoryImpl(
 
             val savedNotification = notification.copy(id = docId)
             notificationDao.insert(savedNotification.toEntity())
+            sendPushNotification(savedNotification)
 
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    private suspend fun sendPushNotification(notification: Notification) {
+        try {
+            val targetUser = firestoreService
+                .getDocument("users", notification.userId)
+                ?.toObject(UserDto::class.java)
+            val fcmTokens = buildList {
+                targetUser?.fcmTokens?.filterTo(this) { it.isNotBlank() }
+                targetUser?.fcmToken?.takeIf { it.isNotBlank() }?.let(::add)
+            }.distinct()
+
+            fcmTokens.forEach { fcmToken ->
+                FcmSender.sendPushNotification(
+                    context = DanganiApplication.instance,
+                    targetToken = fcmToken,
+                    title = notification.title,
+                    body = notification.message
+                )
+            }
+        } catch (_: Exception) { }
     }
 }
 
