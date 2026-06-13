@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.ryuzora.dangani.domain.model.TaskStatus
 import com.ryuzora.dangani.ui.theme.*
 
@@ -24,30 +25,27 @@ fun StatusBadge(
     status: TaskStatus,
     modifier: Modifier = Modifier
 ) {
-    val (backgroundColor, textColor, dotColor) = when (status) {
-        TaskStatus.UNASSIGNED -> Triple(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onBackground, MaterialTheme.colorScheme.onSurfaceVariant)
-        TaskStatus.IN_PROGRESS -> Triple(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onPrimary, Color.White)
-        TaskStatus.NEED_REVIEW -> Triple(Color(0xFFFFB300), MaterialTheme.colorScheme.onPrimary, Color.White)
-        TaskStatus.REVISION -> Triple(Color(0xFFFFB300), MaterialTheme.colorScheme.onPrimary, Color.White)
-        TaskStatus.ACCEPTED -> Triple(Color(0xFF4CAF50), MaterialTheme.colorScheme.onPrimary, Color.White)
+    val (backgroundColor, textColor) = when (status) {
+        TaskStatus.UNASSIGNED -> Pair(Color(0xFF9AA0A6), Color.White)
+        TaskStatus.IN_PROGRESS -> Pair(Color(0xFFAECBFA), Color(0xFF174EA6))
+        TaskStatus.NEED_REVIEW -> Pair(Color(0xFFFAD2CF), Color(0xFFB31412))
+        TaskStatus.REVISION -> Pair(Color(0xFFFAD2CF), Color(0xFFB31412))
+        TaskStatus.ACCEPTED -> Pair(Color(0xFFCEEAD6), Color(0xFF0D652D))
     }
 
-    Row(
+    Box(
         modifier = modifier
             .clip(RoundedCornerShape(50))
             .background(backgroundColor)
-            .padding(horizontal = 10.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
+            .padding(horizontal = 12.dp, vertical = 4.dp),
+        contentAlignment = Alignment.Center
     ) {
-        Box(
-            modifier = Modifier
-                .size(6.dp)
-                .background(dotColor, CircleShape)
-        )
         Text(
-            text = status.displayName,
-            style = MaterialTheme.typography.labelSmall,
+            text = status.displayName.uppercase(),
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                fontSize = 10.sp
+            ),
             color = textColor
         )
     }

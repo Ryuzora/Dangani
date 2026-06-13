@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -30,15 +31,18 @@ fun AcademicStandingCard(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(20.dp))
             .background(
                 Brush.linearGradient(
-                    colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primaryContainer),
-                    start = Offset(0f, 0f),
-                    end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
+                    colors = listOf(
+                        androidx.compose.ui.graphics.Color(0xFF003882),
+                        androidx.compose.ui.graphics.Color(0xFF1964D3)
+                    ),
+                    start = Offset(0f, Float.POSITIVE_INFINITY),
+                    end = Offset(Float.POSITIVE_INFINITY, 0f)
                 )
             )
-            .padding(24.dp)
+            .padding(vertical = 32.dp, horizontal = 24.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -48,28 +52,46 @@ fun AcademicStandingCard(
             Text(
                 text = "ACADEMIC STANDING",
                 style = MaterialTheme.typography.labelSmall.copy(
-                    letterSpacing = 2.sp,
-                    fontWeight = FontWeight.SemiBold
+                    letterSpacing = 1.5.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 10.sp
                 ),
-                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.75f)
+                color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.8f)
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            Text(
-                text = "$totalPoints TP",
-                style = MaterialTheme.typography.headlineLarge.copy(
-                    fontWeight = FontWeight.Bold
-                ),
-                color = MaterialTheme.colorScheme.onPrimary
-            )
+            androidx.compose.foundation.layout.Row(
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = totalPoints.toString(),
+                    style = MaterialTheme.typography.displayLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 56.sp
+                    ),
+                    color = androidx.compose.ui.graphics.Color.White
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "TP",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = androidx.compose.ui.graphics.Color.White,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             Text(
                 text = "Points Earned",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.Medium
+                ),
+                color = androidx.compose.ui.graphics.Color.White
             )
         }
     }

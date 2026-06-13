@@ -15,6 +15,7 @@ data class Task(
     val helperName: String = "",
     val helperAvatarUrl: String = "",
     val proofOfWorkUrl: String = "",
+    val revisionNote: String = "",
     val applicantCount: Int = 0,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()

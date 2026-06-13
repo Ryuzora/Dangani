@@ -42,9 +42,9 @@ fun MyTaskCard(
     Card(
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Box(modifier = Modifier.padding(16.dp)) {
             Column(modifier = Modifier.fillMaxWidth()) {
@@ -52,7 +52,7 @@ fun MyTaskCard(
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.Top
                 ) {
                     Text(
                         text = task.title,
@@ -60,9 +60,9 @@ fun MyTaskCard(
                             fontWeight = FontWeight.Bold
                         ),
                         color = MaterialTheme.colorScheme.onBackground,
-                        maxLines = 1,
+                        maxLines = 3,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f).padding(top = 4.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     StatusBadge(status = task.status)

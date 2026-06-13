@@ -13,6 +13,7 @@ data class User(
     val averageTaskPoints: Double = 0.0,
     val whatsapp: String = "",
     val instagram: String = "",
+    val fcmToken: String = "",
     val createdAt: Long = System.currentTimeMillis()
 )
 

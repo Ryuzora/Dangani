@@ -513,6 +513,31 @@ fun WorkSubmissionScreen(
                         }
 
                         else -> {
+                            if (task.status == TaskStatus.REVISION && task.revisionNote.isNotBlank()) {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = androidx.compose.ui.graphics.Color(0xFFFFEBEE)
+                                    ),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                                ) {
+                                    Column(modifier = Modifier.padding(16.dp)) {
+                                        Text(
+                                            text = "Requester Meminta Revisi",
+                                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                            color = MaterialTheme.colorScheme.error
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(
+                                            text = task.revisionNote,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+
                             DanganiButton(
                                 text = if (uiState.isUploading) "Mengunggah..." else "Mark as Completed",
                                 onClick = { viewModel.submitWork() },

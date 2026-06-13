@@ -152,13 +152,17 @@ fun ProfileScreen(
                             }
                         }
 
-                        // Avatar with blue ring + camera overlay
-                        Box(contentAlignment = Alignment.BottomEnd) {
+                        val isVerifiedBadge = user?.let { it.tasksCompleted > 15 && it.ratingAverage >= 4.5 } ?: false
+
+                        // Avatar with blue ring and verified badge overlay
+                        Box(contentAlignment = Alignment.BottomCenter) {
                             Box(
                                 modifier = Modifier
                                     .size(108.dp)
                                     .border(3.dp, MaterialTheme.colorScheme.primary, CircleShape)
-                                    .padding(4.dp),
+                                    .padding(4.dp)
+                                    .clip(CircleShape)
+                                    .clickable { photoPickerLauncher.launch("image/*") },
                                 contentAlignment = Alignment.Center
                             ) {
                                 if (user?.avatarUrl?.isNotBlank() == true) {
@@ -173,41 +177,25 @@ fun ProfileScreen(
                                 } else {
                                     AvatarPlaceholder(name = user?.username ?: "?", size = 100.dp)
                                 }
-                            }
 
-                            // Camera icon overlay
-                            Box(
-                                modifier = Modifier
-                                    .size(32.dp)
-                                    .offset(x = (-2).dp, y = (-2).dp)
-                                    .background(MaterialTheme.colorScheme.primary, CircleShape)
-                                    .clickable { photoPickerLauncher.launch("image/*") },
-                                contentAlignment = Alignment.Center
-                            ) {
                                 if (uiState.isUploadingPhoto) {
                                     CircularProgressIndicator(
-                                        modifier = Modifier.size(16.dp),
-                                        color = MaterialTheme.colorScheme.onPrimary,
-                                        strokeWidth = 2.dp
-                                    )
-                                } else {
-                                    Icon(
-                                        imageVector = Icons.Filled.CameraAlt,
-                                        contentDescription = "Ubah foto",
-                                        modifier = Modifier.size(16.dp),
-                                        tint = MaterialTheme.colorScheme.onPrimary
+                                        modifier = Modifier.size(24.dp),
+                                        color = MaterialTheme.colorScheme.primary,
+                                        strokeWidth = 3.dp
                                     )
                                 }
                             }
+
+                            // Verified badge overlay at bottom center
+                            if (isVerifiedBadge) {
+                                VerifiedBadge(
+                                    modifier = Modifier.offset(y = 10.dp)
+                                )
+                            }
                         }
 
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        // Verified badge
-                        if (user?.isVerified == true) {
-                            VerifiedBadge()
-                            Spacer(modifier = Modifier.height(8.dp))
-                        }
+                        Spacer(modifier = Modifier.height(20.dp))
 
                         // Username with edit icon
                         if (isEditing) {
@@ -416,66 +404,7 @@ fun ProfileScreen(
                     }
                 }
 
-                // Action buttons
-                item {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp)
-                            .padding(bottom = 24.dp)
-                    ) {
-                        if (isEditing) {
-                            DanganiButton(
-                                text = "Simpan Profil",
-                                onClick = { 
-                                    viewModel.updateProfile(editUsername, editWhatsapp, editInstagram)
-                                    isEditing = false
-                                },
-                                variant = ButtonVariant.PRIMARY
-                            )
-                            Spacer(modifier = Modifier.height(12.dp))
-                            DanganiButton(
-                                text = "Batal",
-                                onClick = { 
-                                    editWhatsapp = user?.whatsapp ?: ""
-                                    editInstagram = user?.instagram ?: ""
-                                    isEditing = false 
-                                },
-                                variant = ButtonVariant.SECONDARY
-                            )
-                        } else {
-                            DanganiButton(
-                                text = "Edit Profil",
-                                onClick = { isEditing = true },
-                                variant = ButtonVariant.PRIMARY
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        TextButton(
-                            onClick = viewModel::logout,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(
-                                text = "Keluar",
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.error
-                            )
-                        }
-
-                        if (uiState.error != null) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = uiState.error!!,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.error,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
-                    }
-                }
+                // Action buttons will be moved down
 
                 // Reviews section
                 item {
@@ -532,6 +461,82 @@ fun ProfileScreen(
                                 },
                                 style = MaterialTheme.typography.labelLarge,
                                 color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+
+                // Action buttons moved here
+                item {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                            .padding(vertical = 24.dp)
+                    ) {
+                        if (isEditing) {
+                            DanganiButton(
+                                text = "Simpan Profil",
+                                onClick = { 
+                                    viewModel.updateProfile(editUsername, editWhatsapp, editInstagram)
+                                    isEditing = false
+                                },
+                                variant = ButtonVariant.PRIMARY
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            DanganiButton(
+                                text = "Batal",
+                                onClick = { 
+                                    editWhatsapp = user?.whatsapp ?: ""
+                                    editInstagram = user?.instagram ?: ""
+                                    isEditing = false 
+                                },
+                                variant = ButtonVariant.SECONDARY
+                            )
+                        } else {
+                            androidx.compose.material3.Button(
+                                onClick = { isEditing = true },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp),
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+                                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                                    containerColor = androidx.compose.ui.graphics.Color(0xFFDEE8FA)
+                                )
+                            ) {
+                                Text(
+                                    text = "Edit Profile",
+                                    style = MaterialTheme.typography.labelLarge.copy(
+                                        fontWeight = FontWeight.Bold
+                                    ),
+                                    color = androidx.compose.ui.graphics.Color(0xFF0F47A1)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        TextButton(
+                            onClick = viewModel::logout,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = "Logout",
+                                style = MaterialTheme.typography.labelLarge.copy(
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                color = androidx.compose.ui.graphics.Color(0xFFD32F2F)
+                            )
+                        }
+
+                        if (uiState.error != null) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = uiState.error!!,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
                             )
                         }
                     }

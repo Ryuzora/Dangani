@@ -28,6 +28,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.draw.clip
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ryuzora.dangani.presentation.view.components.MyTaskCard
@@ -50,14 +52,14 @@ fun MyTasksScreen(
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = "Tugas Saya",
-            style = MaterialTheme.typography.headlineMedium.copy(
+            style = MaterialTheme.typography.titleLarge.copy(
                 fontWeight = FontWeight.Bold
             ),
-            color = MaterialTheme.colorScheme.onBackground,
-            textAlign = TextAlign.Center,
+            color = androidx.compose.ui.graphics.Color(0xFF0F47A1),
+            textAlign = TextAlign.Start,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 12.dp)
+                .padding(horizontal = 24.dp, vertical = 12.dp)
         )
 
         // Role Tab Selector
@@ -132,6 +134,54 @@ fun MyTasksScreen(
                                 }
                             }
                         )
+                    }
+                    
+                    if (!isRequesterView) {
+                        item {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(24.dp))
+                                    .background(
+                                        androidx.compose.ui.graphics.Brush.linearGradient(
+                                            colors = listOf(
+                                                androidx.compose.ui.graphics.Color(0xFF003882),
+                                                androidx.compose.ui.graphics.Color(0xFF1964D3)
+                                            ),
+                                            start = androidx.compose.ui.geometry.Offset(0f, Float.POSITIVE_INFINITY),
+                                            end = androidx.compose.ui.geometry.Offset(Float.POSITIVE_INFINITY, 0f)
+                                        )
+                                    )
+                                    .padding(vertical = 32.dp, horizontal = 24.dp)
+                            ) {
+                                Column {
+                                    Text(
+                                        text = "STATISTIK MINGGUAN",
+                                        style = MaterialTheme.typography.labelSmall.copy(
+                                            letterSpacing = 1.5.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 10.sp
+                                        ),
+                                        color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.8f)
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "Kamu telah menyelesaikan...",
+                                        style = MaterialTheme.typography.titleLarge.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 20.sp
+                                        ),
+                                        color = androidx.compose.ui.graphics.Color.White
+                                    )
+                                    Spacer(modifier = Modifier.height(24.dp))
+                                }
+                            }
+                        }
+                    }
+                    
+                    item {
+                        Spacer(modifier = Modifier.height(80.dp)) // Padding for bottom nav
                     }
                 }
             }

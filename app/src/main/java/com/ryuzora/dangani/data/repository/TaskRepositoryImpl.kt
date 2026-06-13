@@ -329,7 +329,7 @@ class TaskRepositoryImpl(
                     senderName = helperDto?.username ?: "",
                     senderAvatarUrl = helperDto?.avatarUrl ?: ""
                 )
-                notificationRepository.createNotification(notification)
+                createAndSendNotification(notification, taskDto.requesterId)
             }
 
             Result.success(Unit)
@@ -406,7 +406,7 @@ class TaskRepositoryImpl(
                             senderName = requester?.username ?: taskDto.requesterName,
                             senderAvatarUrl = requester?.avatarUrl ?: taskDto.requesterAvatarUrl
                         )
-                        notificationRepository.createNotification(notSelectedNotification)
+                        createAndSendNotification(notSelectedNotification, applicationDto.helperId)
                     }
                 }
             }
@@ -424,7 +424,7 @@ class TaskRepositoryImpl(
                 senderName = requester?.username ?: taskDto?.requesterName ?: "",
                 senderAvatarUrl = requester?.avatarUrl ?: taskDto?.requesterAvatarUrl ?: ""
             )
-            notificationRepository.createNotification(notification)
+            createAndSendNotification(notification, helperId)
 
             Result.success(Unit)
         } catch (e: Exception) {
@@ -485,7 +485,7 @@ class TaskRepositoryImpl(
                     senderName = taskDto.helperName,
                     senderAvatarUrl = taskDto.helperAvatarUrl
                 )
-                notificationRepository.createNotification(notification)
+                createAndSendNotification(notification, taskDto.requesterId)
             }
 
             Result.success(publicUrl)
@@ -523,7 +523,7 @@ class TaskRepositoryImpl(
                     senderName = requester?.username ?: taskDto.requesterName,
                     senderAvatarUrl = requester?.avatarUrl ?: taskDto.requesterAvatarUrl
                 )
-                notificationRepository.createNotification(notification)
+                createAndSendNotification(notification, taskDto.helperId)
             }
 
             Result.success(Unit)
@@ -532,11 +532,12 @@ class TaskRepositoryImpl(
         }
     }
 
-    override suspend fun requestRevision(taskId: String): Result<Unit> {
+    override suspend fun requestRevision(taskId: String, revisionNote: String): Result<Unit> {
         return try {
             val updates = mapOf(
                 "status" to TaskStatus.REVISION.name,
                 "proofOfWorkUrl" to "",
+                "revisionNote" to revisionNote,
                 "updatedAt" to System.currentTimeMillis()
             )
             firestoreService.updateDocument("tasks", taskId, updates)
@@ -555,13 +556,13 @@ class TaskRepositoryImpl(
                     role = "helper",
                     type = NotificationType.WORK_REVISION,
                     title = NotificationType.WORK_REVISION.displayName,
-                    message = "Tugas \"${taskDto.title}\" membutuhkan revisi",
+                    message = "Tugas \"${taskDto.title}\" membutuhkan revisi: ${revisionNote.take(50)}${if (revisionNote.length > 50) "..." else ""}",
                     relatedTaskId = taskId,
                     relatedTaskTitle = taskDto.title,
                     senderName = requester?.username ?: taskDto.requesterName,
                     senderAvatarUrl = requester?.avatarUrl ?: taskDto.requesterAvatarUrl
                 )
-                notificationRepository.createNotification(notification)
+                createAndSendNotification(notification, taskDto.helperId)
             }
 
             Result.success(Unit)
@@ -595,6 +596,28 @@ class TaskRepositoryImpl(
                 )
             )
         } catch (_: Exception) { }
+    }
+
+    private suspend fun createAndSendNotification(notification: Notification, targetUserId: String) {
+        // Save to database
+        notificationRepository.createNotification(notification)
+        
+        // Fetch target user's FCM token and send push notification
+        try {
+            val targetUserDoc = firestoreService.getDocument("users", targetUserId)?.toObject(com.ryuzora.dangani.data.remote.dto.UserDto::class.java)
+            val fcmToken = targetUserDoc?.fcmToken
+            if (!fcmToken.isNullOrEmpty()) {
+                val context = com.ryuzora.dangani.DanganiApplication.instance
+                com.ryuzora.dangani.data.remote.fcm.FcmSender.sendPushNotification(
+                    context = context,
+                    targetToken = fcmToken,
+                    title = notification.title,
+                    body = notification.message
+                )
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     private suspend fun getRequesterForNotification(taskDto: TaskDto): UserDto? {

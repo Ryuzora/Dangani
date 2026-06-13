@@ -49,13 +49,13 @@ fun DanganiTextField(
         visualTransformation = visualTransformation,
         keyboardOptions = keyboardOptions,
         keyboardActions = keyboardActions,
-        shape = RoundedCornerShape(24.dp), // Pill-shaped or heavily rounded
+        shape = RoundedCornerShape(12.dp),
         colors = TextFieldDefaults.colors(
-            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant, // The gray background
-            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-            disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+            disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
             errorContainerColor = MaterialTheme.colorScheme.errorContainer,
-            focusedIndicatorColor = Color.Transparent, // No bottom line/outline
+            focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent,
             disabledIndicatorColor = Color.Transparent,
             errorIndicatorColor = Color.Transparent,

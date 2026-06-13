@@ -29,12 +29,12 @@ fun RoleTabSelector(
     modifier: Modifier = Modifier,
     unreadCounts: List<Int> = emptyList()
 ) {
-    val tabs = listOf("As Requester", "As Helper")
+    val tabs = listOf("Sebagai Requester", "Sebagai Helper")
 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface)
+            .background(androidx.compose.ui.graphics.Color.Transparent)
     ) {
         tabs.forEachIndexed { index, title ->
             val isSelected = selectedTab == index
@@ -50,33 +50,26 @@ fun RoleTabSelector(
             ) {
                 Text(
                     text = unreadCounts.getOrNull(index)?.takeIf { it > 0 }?.let { "$title ($it)" } ?: title,
-                    style = MaterialTheme.typography.titleSmall.copy(
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                     ),
-                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                    color = if (isSelected) androidx.compose.ui.graphics.Color(0xFF0F47A1) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                     modifier = Modifier.padding(vertical = 14.dp)
                 )
                 // Underline indicator
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(0.6f)
-                        .height(3.dp)
-                        .clip(RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp))
-                        .background(
-                            if (isSelected) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-                        )
-                )
+                if (isSelected) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(2.dp)
+                            .background(androidx.compose.ui.graphics.Color(0xFF0F47A1))
+                    )
+                } else {
+                    Spacer(modifier = Modifier.height(2.dp))
+                }
             }
         }
     }
-    // Divider below
-    Spacer(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(1.dp)
-            .background(MaterialTheme.colorScheme.outline)
-    )
 }
 
 

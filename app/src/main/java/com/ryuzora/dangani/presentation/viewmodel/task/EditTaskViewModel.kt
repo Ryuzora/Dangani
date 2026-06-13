@@ -257,7 +257,7 @@ class EditTaskViewModel(private val taskId: String) : ViewModel() {
         }
     }
 
-    fun requestRevision() {
+    fun requestRevision(revisionNote: String) {
         val task = _uiState.value.task ?: return
 
         if (task.status != TaskStatus.NEED_REVIEW) {
@@ -270,7 +270,7 @@ class EditTaskViewModel(private val taskId: String) : ViewModel() {
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true, error = null) }
 
-            requestRevisionUseCase(taskId)
+            requestRevisionUseCase(taskId, revisionNote)
                 .onSuccess {
                     _uiState.update { it.copy(isSaving = false, isSaved = true) }
                 }

@@ -30,28 +30,28 @@ fun ProfileStatsCard(
 ) {
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color(0xFFF7F7F9)),
+        border = null
     ) {
         Column(
             modifier = Modifier
                 .padding(horizontal = 16.dp, vertical = 20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+            horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.Center
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = label,
-                modifier = Modifier.size(28.dp),
+                modifier = Modifier.size(24.dp),
                 tint = MaterialTheme.colorScheme.primary
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             Text(
                 text = value,
-                style = MaterialTheme.typography.headlineMedium.copy(
+                style = MaterialTheme.typography.headlineSmall.copy(
                     fontWeight = FontWeight.Bold
                 ),
                 color = MaterialTheme.colorScheme.onBackground

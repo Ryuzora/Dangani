@@ -14,17 +14,16 @@ class ChatRepositoryImpl : ChatRepository {
 
     private val messages = MutableStateFlow<List<ChatMessage>>(emptyList())
     
-    // Initialize Gemini model
     private val generativeModel = GenerativeModel(
-        modelName = "gemini-1.5-flash",
+        modelName = "gemini-3.1-flash-lite",
         apiKey = BuildConfig.GEMINI_API_KEY
     )
     
     // Start a chat session to keep history
     private val chat = generativeModel.startChat(
         history = listOf(
-            content(role = "user") { text("Hello! You are the Dangani virtual assistant, a helpful customer service AI for the Dangani app. Be polite, concise, and helpful.") },
-            content(role = "model") { text("Understood! I am the Dangani virtual assistant. I will assist the user politely and concisely.") }
+            content(role = "user") { text("Halo! Kamu adalah asisten virtual resmi untuk Dangani, sebuah aplikasi platform peer-to-peer (P2P) untuk mahasiswa saling membantu mengerjakan tugas. Sistem Dangani terinspirasi dari metodologi Agile Scrum Jira.\\nKonteks Aplikasi:\\n- Ada 2 peran utama: 'Requester' (pembuat tugas) dan 'Helper' (pembantu tugas). Setiap pengguna bisa menjadi Requester maupun Helper tanpa perlu membuat akun terpisah.\\n- Requester membuat tugas dengan menentukan deskripsi, kategori, dan 'Task Point'. Task Point menggunakan deret Fibonacci (1, 2, 3, 5, 8, 13) yang terinspirasi dari Jira Story Points untuk merepresentasikan tingkat kesulitan/beban tugas.\\n- Tugas yang dibuat akan tampil di beranda. Pengguna lain bisa melihat detail tugas dan melamar untuk menjadi Helper.\\n- Requester dapat memilih Helper dari daftar pelamar dengan mempertimbangkan rating profil pelamar.\\n- Setelah terpilih, Helper mengerjakan tugas dan mengunggah bukti penyelesaian (Work Submission).\\n- Requester dapat menyetujui (Approve) atau meminta revisi atas hasil kerja Helper.\\n- Status Tugas memiliki 4 tahap: 'Unassigned' (Belum ditugaskan), 'In Progress' (Sedang dikerjakan), 'Need Review' (Butuh direviu), dan 'Accepted' (Diterima/Selesai).\\nTugasmu adalah menjawab pertanyaan pengguna seputar cara kerja aplikasi berdasarkan aturan di atas. Jawablah dengan ramah, sopan, singkat, solutif, dan selalu gunakan Bahasa Indonesia yang profesional.") },
+            content(role = "model") { text("Mengerti! Saya adalah asisten virtual Dangani. Saya siap membantu pengguna dengan ramah, sopan, dan berbahasa Indonesia yang baik. Ada yang bisa saya bantu?") }
         )
     )
 
@@ -33,7 +32,7 @@ class ChatRepositoryImpl : ChatRepository {
         messages.value = listOf(
             ChatMessage(
                 id = UUID.randomUUID().toString(),
-                text = "Hello! I am the Dangani virtual assistant. How can I help you today?",
+                text = "Halo! Saya adalah asisten virtual Dangani. Ada yang bisa saya bantu hari ini?",
                 isFromUser = false
             )
         )
@@ -54,14 +53,14 @@ class ChatRepositoryImpl : ChatRepository {
         val botMessageId = UUID.randomUUID().toString()
         val botMessage = ChatMessage(
             id = botMessageId,
-            text = "Typing...",
+            text = "Mengetik...",
             isFromUser = false
         )
         messages.update { it + botMessage }
 
         try {
             val response = chat.sendMessage(message)
-            val responseText = response.text?.trim() ?: "I'm sorry, I couldn't generate a response."
+            val responseText = response.text?.trim() ?: "Maaf, saya tidak dapat merespons saat ini."
 
             messages.update { currentList ->
                 currentList.map { 
@@ -69,9 +68,11 @@ class ChatRepositoryImpl : ChatRepository {
                 }
             }
         } catch (e: Exception) {
+            // Update the bot message with an error
+            val errorMsg = e.message ?: e.toString()
             messages.update { currentList ->
                 currentList.map { 
-                    if (it.id == botMessageId) it.copy(text = "I'm sorry, something went wrong. Please verify your GEMINI_API_KEY in local.properties.") else it 
+                    if (it.id == botMessageId) it.copy(text = "Error: $errorMsg") else it 
                 }
             }
         }

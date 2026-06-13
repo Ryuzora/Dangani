@@ -138,6 +138,10 @@ fun DanganiNavGraph(
             EditTaskScreen(
                 taskId = taskId,
                 onNavigateBack = { navController.popBackStack() },
+                onTaskDeleted = {
+                    // Pop EditTask and TaskDetail so we land back on Home/MyTasks
+                    navController.popBackStack(Screen.TaskDetail.route, inclusive = true)
+                },
                 onNavigateToSelectHelper = {
                     navController.navigate(Screen.SelectHelper.createRoute(taskId))
                 },

@@ -19,10 +19,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.border
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.outlined.Send
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.InsertDriveFile
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -41,9 +45,13 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
@@ -78,15 +86,21 @@ import androidx.compose.ui.unit.sp
 fun EditTaskScreen(
     taskId: String,
     onNavigateBack: () -> Unit,
+    onTaskDeleted: () -> Unit = onNavigateBack,
     onNavigateToSelectHelper: () -> Unit,
     onNavigateToProfile: (String) -> Unit,
     viewModel: EditTaskViewModel = remember { EditTaskViewModel(taskId) }
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    
+    var showRevisionDialog by remember { mutableStateOf(false) }
+    var revisionNote by remember { mutableStateOf("") }
 
     LaunchedEffect(uiState.isDeleted, uiState.isSaved) {
-        if (uiState.isDeleted || uiState.isSaved) {
+        if (uiState.isDeleted) {
+            onTaskDeleted()
+        } else if (uiState.isSaved) {
             onNavigateBack()
         }
     }
@@ -94,12 +108,13 @@ fun EditTaskScreen(
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            TopAppBar(
+            androidx.compose.material3.CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = "Edit Task",
+                        text = "Task Detail",
                         style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
                         )
                     )
                 },
@@ -111,9 +126,17 @@ fun EditTaskScreen(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
+                actions = {
+                    IconButton(onClick = { /* TODO */ }) {
+                        Icon(
+                            imageVector = Icons.Filled.MoreVert,
+                            contentDescription = "More options"
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
+                    titleContentColor = MaterialTheme.colorScheme.primary
                 )
             )
         }
@@ -154,9 +177,6 @@ fun EditTaskScreen(
                         .padding(horizontal = 20.dp)
                 ) {
                     Spacer(modifier = Modifier.height(8.dp))
-
-                    // Status badge
-                    StatusBadge(status = task.status)
 
                     Spacer(modifier = Modifier.height(16.dp))
 
@@ -250,223 +270,246 @@ fun EditTaskScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     // TASK POINTS
-                    Text(
-                        text = "TASK POINTS",
-                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    TaskPointsSelector(
-                        selectedPoints = uiState.selectedPoints,
-                        onPointsSelected = viewModel::onPointsSelected,
-                        enabled = uiState.isEditable
-                    )
+                    if (uiState.isEditable) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text(
+                                    text = "TASK POINTS",
+                                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    text = "Based on complexity",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                )
+                            }
+                            Text(
+                                text = "TP",
+                                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                                color = androidx.compose.ui.graphics.Color(0xFF005C29) // Dark green
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        TaskPointsSelector(
+                            selectedPoints = uiState.selectedPoints,
+                            onPointsSelected = viewModel::onPointsSelected,
+                            enabled = true
+                        )
+                    } else {
+                        Text(
+                            text = "TASK POINTS",
+                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                            com.ryuzora.dangani.presentation.view.components.TaskPointsBadge(
+                                points = uiState.selectedPoints,
+                                isLarge = true
+                            )
+                        }
+                    }
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Helper section (when helper is assigned)
+                    // Helper section
                     val helper = uiState.helper
-                    if (helper != null && task.helperId.isNotBlank()) {
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outline, thickness = 1.dp)
-                        Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    // Background for helper profile box
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                            .padding(16.dp)
+                    ) {
+                        Column {
+                            Text(
+                                text = "HELPER PROFILE",
+                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
 
-                        Text(
-                            text = "HELPER",
-                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        TaskProfileCard(
-                            name = helper.username,
-                            avatarUrl = helper.avatarUrl,
-                            rating = helper.ratingAverage,
-                            statsText = "${helper.tasksCompleted} tugas selesai",
-                            contentDescription = "Helper Avatar",
-                            isVerified = helper.isVerified,
-                            onClick = { onNavigateToProfile(helper.id) }
-                        )
-                        if (false) {
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onNavigateToProfile(helper.id) },
-                            shape = RoundedCornerShape(12.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(14.dp)
-                            ) {
-                                if (helper.avatarUrl.isNotBlank()) {
-                                    AsyncImage(
-                                        model = helper.avatarUrl,
-                                        contentDescription = "Helper Avatar",
-                                        modifier = Modifier
-                                            .size(48.dp)
-                                            .clip(CircleShape),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                } else {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(48.dp)
-                                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), CircleShape),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = helper.username.take(1).uppercase(),
-                                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                            color = MaterialTheme.colorScheme.primary
-                                        )
-                                    }
-                                }
-
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        Text(
-                                            text = helper.username,
-                                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                            color = MaterialTheme.colorScheme.onBackground,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                        if (helper.isVerified) {
-                                            VerifiedBadge()
-                                        }
-                                    }
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Filled.Star,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(14.dp),
-                                            tint = androidx.compose.ui.graphics.Color(0xFFFFB300)
-                                        )
-                                        Text(
-                                            text = String.format("%.1f", helper.ratingAverage),
-                                            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
-                                            color = MaterialTheme.colorScheme.onBackground
-                                        )
-                                        Text("•", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                        Text(
-                                            text = "${helper.tasksCompleted} tugas selesai",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                }
-
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                    contentDescription = "View Profile",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(24.dp)
+                            if (helper != null && task.helperId.isNotBlank()) {
+                                TaskProfileCard(
+                                    name = helper.username,
+                                    avatarUrl = helper.avatarUrl,
+                                    rating = helper.ratingAverage,
+                                    statsText = "${helper.tasksCompleted} tasks completed",
+                                    contentDescription = "Helper Avatar",
+                                    isVerified = helper.isVerified,
+                                    onClick = { onNavigateToProfile(helper.id) },
+                                    modifier = Modifier.fillMaxWidth()
                                 )
-                            }
-                        }
-                        }
-                        Spacer(modifier = Modifier.height(16.dp))
-                    }
-
-                    // Proof of Work section (when proof submitted)
-                    if (uiState.proofSubmitted) {
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outline, thickness = 1.dp)
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Text(
-                            text = "PROOF OF WORK",
-                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        val isImage = task.proofOfWorkUrl.lowercase().let { 
-                            it.contains(".jpg") || it.contains(".jpeg") || 
-                            it.contains(".png") || it.contains(".webp") || it.contains(".gif")
-                        }
-
-                        if (isImage) {
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(200.dp)
-                                    .clickable {
-                                        val intent = android.content.Intent(
-                                            android.content.Intent.ACTION_VIEW,
-                                            android.net.Uri.parse(task.proofOfWorkUrl)
-                                        )
-                                        context.startActivity(intent)
-                                    },
-                                shape = RoundedCornerShape(12.dp),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                            ) {
-                                coil.compose.AsyncImage(
-                                    model = task.proofOfWorkUrl,
-                                    contentDescription = "Proof of Work",
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Crop
-                                )
-                            }
-                        } else {
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        val intent = android.content.Intent(
-                                            android.content.Intent.ACTION_VIEW,
-                                            android.net.Uri.parse(task.proofOfWorkUrl)
-                                        )
-                                        context.startActivity(intent)
-                                    },
-                                shape = RoundedCornerShape(12.dp),
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                            ) {
+                            } else {
+                                // "Looking for Helper" box
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(16.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                        .clickable { onNavigateToSelectHelper() },
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Outlined.InsertDriveFile,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(32.dp),
-                                        tint = MaterialTheme.colorScheme.primary
+                                    Box(
+                                        modifier = Modifier
+                                            .size(48.dp)
+                                            .clip(CircleShape)
+                                            .background(Color.LightGray.copy(alpha = 0.7f))
                                     )
+                                    Spacer(modifier = Modifier.width(16.dp))
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
-                                            text = "File Bukti Pengerjaan",
-                                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
-                                            color = MaterialTheme.colorScheme.primary
+                                            text = "Looking for Helper",
+                                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                            color = MaterialTheme.colorScheme.onBackground
                                         )
                                         Text(
-                                            text = "Tap untuk membuka file",
+                                            text = "${task.applicantCount} Helpers Applied",
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                        contentDescription = "Buka",
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(24.dp)
+                                        contentDescription = "Select Helper",
+                                        tint = MaterialTheme.colorScheme.onBackground
                                     )
                                 }
                             }
                         }
-                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+
+                    // Proof of Work section
+                    if (task.helperId.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "PROOF OF WORK",
+                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        if (uiState.proofSubmitted && task.proofOfWorkUrl.isNotBlank()) {
+                            val isImage = task.proofOfWorkUrl.lowercase().let { 
+                                it.contains(".jpg") || it.contains(".jpeg") || 
+                                it.contains(".png") || it.contains(".webp") || it.contains(".gif")
+                            }
+
+                            if (isImage) {
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(200.dp)
+                                        .clickable {
+                                            val intent = android.content.Intent(
+                                                android.content.Intent.ACTION_VIEW,
+                                                android.net.Uri.parse(task.proofOfWorkUrl)
+                                            )
+                                            context.startActivity(intent)
+                                        },
+                                    shape = RoundedCornerShape(24.dp),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                                ) {
+                                    coil.compose.AsyncImage(
+                                        model = task.proofOfWorkUrl,
+                                        contentDescription = "Proof of Work",
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                }
+                            } else {
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            val intent = android.content.Intent(
+                                                android.content.Intent.ACTION_VIEW,
+                                                android.net.Uri.parse(task.proofOfWorkUrl)
+                                            )
+                                            context.startActivity(intent)
+                                        },
+                                    shape = RoundedCornerShape(24.dp),
+                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Outlined.InsertDriveFile,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(32.dp),
+                                            tint = MaterialTheme.colorScheme.primary
+                                        )
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = "File Bukti Pengerjaan",
+                                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                                                color = MaterialTheme.colorScheme.primary
+                                            )
+                                            Text(
+                                                text = "Tap untuk membuka file",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                        Icon(
+                                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                            contentDescription = "Buka",
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        } else {
+                            // Helper has not submitted any file yet
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(200.dp)
+                                    .clip(RoundedCornerShape(24.dp))
+                                    .background(Color.Transparent)
+                                    .border(
+                                        width = 1.dp,
+                                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                                        shape = RoundedCornerShape(24.dp)
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(56.dp)
+                                            .clip(CircleShape)
+                                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "?",
+                                            style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Text(
+                                        text = "Helper has not submitted any file yet",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(24.dp))
                     }
 
                     // Error message
@@ -493,7 +536,7 @@ fun EditTaskScreen(
 
                             DanganiButton(
                                 text = "Ask Revision",
-                                onClick = { viewModel.requestRevision() },
+                                onClick = { showRevisionDialog = true },
                                 variant = ButtonVariant.DANGER,
                                 enabled = !uiState.isSaving
                             )
@@ -575,30 +618,68 @@ fun EditTaskScreen(
                         TaskStatus.IN_PROGRESS,
                         TaskStatus.REVISION -> {
                             if (uiState.isEditable) {
-                                DanganiButton(
-                                    text = "Confirm Changes",
-                                    onClick = { viewModel.saveTask() },
-                                    variant = ButtonVariant.PRIMARY,
-                                    enabled = !uiState.isSaving && !uiState.isDeleting
-                                )
-
-                                Spacer(modifier = Modifier.height(10.dp))
-
-                                DanganiButton(
-                                    text = "Delete Task",
+                                // Delete Task Button
+                                androidx.compose.material3.Button(
                                     onClick = { viewModel.deleteTask() },
-                                    variant = ButtonVariant.DANGER,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(56.dp),
+                                    shape = RoundedCornerShape(28.dp),
+                                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFFA62529) // Dark red
+                                    ),
                                     enabled = !uiState.isSaving && !uiState.isDeleting
-                                )
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.Center
+                                    ) {
+                                        Text(
+                                            text = "Delete Task",
+                                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                            color = Color.White
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Icon(
+                                            imageVector = Icons.Outlined.Delete,
+                                            contentDescription = "Delete Task",
+                                            tint = Color.White,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                }
 
-                                if (task.helperId.isBlank() && task.applicantCount > 0) {
-                                    Spacer(modifier = Modifier.height(10.dp))
+                                Spacer(modifier = Modifier.height(24.dp))
 
-                                    DanganiButton(
-                                        text = "Select Helper (${task.applicantCount})",
-                                        onClick = onNavigateToSelectHelper,
-                                        variant = ButtonVariant.SECONDARY
-                                    )
+                                // Confirm Task Button
+                                androidx.compose.material3.Button(
+                                    onClick = { viewModel.saveTask() },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(56.dp),
+                                    shape = RoundedCornerShape(28.dp),
+                                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFF004CBF) // Deep blue
+                                    ),
+                                    enabled = !uiState.isSaving && !uiState.isDeleting
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.Center
+                                    ) {
+                                        Text(
+                                            text = if (task.helperId.isBlank()) "Confirm" else "Confirm Task",
+                                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                            color = Color.White
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Icon(
+                                            imageVector = Icons.AutoMirrored.Outlined.Send,
+                                            contentDescription = "Confirm",
+                                            tint = Color.White,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -608,6 +689,60 @@ fun EditTaskScreen(
                 }
             }
         }
+    }
+    if (showRevisionDialog) {
+        AlertDialog(
+            onDismissRequest = { showRevisionDialog = false },
+            title = {
+                Text(
+                    text = "Request Revision",
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "Jelaskan detail revisi yang perlu dilakukan oleh helper.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedTextField(
+                        value = revisionNote,
+                        onValueChange = { revisionNote = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(120.dp),
+                        placeholder = { Text("Detail revisi...") },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                        )
+                    )
+                }
+            },
+            confirmButton = {
+                DanganiButton(
+                    text = "Kirim",
+                    onClick = {
+                        viewModel.requestRevision(revisionNote)
+                        showRevisionDialog = false
+                    },
+                    variant = ButtonVariant.PRIMARY,
+                    enabled = revisionNote.isNotBlank() && !uiState.isSaving
+                )
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showRevisionDialog = false }
+                ) {
+                    Text("Batal")
+                }
+            },
+            containerColor = MaterialTheme.colorScheme.surface,
+            shape = RoundedCornerShape(16.dp)
+        )
     }
 }
 

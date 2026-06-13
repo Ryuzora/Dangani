@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -125,35 +126,40 @@ fun OtherProfileScreen(
                     ) {
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        // Avatar with blue ring (no camera icon)
-                        Box(
-                            modifier = Modifier
-                                .size(108.dp)
-                                .border(3.dp, MaterialTheme.colorScheme.primary, CircleShape)
-                                .padding(4.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (user?.avatarUrl?.isNotBlank() == true) {
-                                AsyncImage(
-                                    model = user.avatarUrl,
-                                    contentDescription = "Profile Photo",
-                                    modifier = Modifier
-                                        .size(100.dp)
-                                        .clip(CircleShape),
-                                    contentScale = ContentScale.Crop
+                        val isVerifiedBadge = user?.let { it.tasksCompleted > 15 && it.ratingAverage >= 4.5 } ?: false
+
+                        // Avatar with blue ring and verified badge overlay
+                        Box(contentAlignment = Alignment.BottomCenter) {
+                            Box(
+                                modifier = Modifier
+                                    .size(108.dp)
+                                    .border(3.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                                    .padding(4.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (user?.avatarUrl?.isNotBlank() == true) {
+                                    AsyncImage(
+                                        model = user.avatarUrl,
+                                        contentDescription = "Profile Photo",
+                                        modifier = Modifier
+                                            .size(100.dp)
+                                            .clip(CircleShape),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                } else {
+                                    AvatarPlaceholder(name = user?.username ?: "?", size = 100.dp)
+                                }
+                            }
+
+                            // Verified badge overlay at bottom center
+                            if (isVerifiedBadge) {
+                                VerifiedBadge(
+                                    modifier = Modifier.offset(y = 10.dp)
                                 )
-                            } else {
-                                AvatarPlaceholder(name = user?.username ?: "?", size = 100.dp)
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        // Verified badge
-                        if (user?.isVerified == true) {
-                            VerifiedBadge()
-                            Spacer(modifier = Modifier.height(8.dp))
-                        }
+                        Spacer(modifier = Modifier.height(20.dp))
 
                         // Username (no edit icon)
                         Text(
