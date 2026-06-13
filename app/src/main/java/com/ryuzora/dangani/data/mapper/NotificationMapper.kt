@@ -94,3 +94,4 @@ fun Notification.toFirestoreMap(): Map<String, Any?> = mapOf(
     "isRead" to isRead,
     "createdAt" to createdAt
 )
+

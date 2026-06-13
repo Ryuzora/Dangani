@@ -38,3 +38,4 @@ data class TaskDto(
     @get:PropertyName("updatedAt") @set:PropertyName("updatedAt")
     var updatedAt: Long = System.currentTimeMillis()
 )
+

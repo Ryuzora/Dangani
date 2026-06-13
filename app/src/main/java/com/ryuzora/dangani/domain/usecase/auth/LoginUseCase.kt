@@ -14,3 +14,4 @@ class LoginUseCase(private val userRepository: UserRepository) {
         return userRepository.login(email, password)
     }
 }
+

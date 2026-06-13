@@ -16,3 +16,4 @@ enum class TaskPoints(val value: Int, val estimatedCost: String) {
         fun fromValue(value: Int): TaskPoints? = entries.find { it.value == value }
     }
 }
+

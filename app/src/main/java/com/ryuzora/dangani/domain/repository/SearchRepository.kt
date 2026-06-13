@@ -19,3 +19,4 @@ interface SearchRepository {
     fun getReviewsForUser(userId: String): Flow<List<Review>>
     suspend fun addReview(review: Review): Result<Unit>
 }
+

@@ -10,3 +10,4 @@ class ApplyToTaskUseCase(private val taskRepository: TaskRepository) {
         return taskRepository.applyToTask(taskId, helperId)
     }
 }
+

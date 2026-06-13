@@ -9,3 +9,4 @@ class GetNotificationsUseCase(private val notificationRepository: NotificationRe
         return notificationRepository.getNotifications(userId, role)
     }
 }
+

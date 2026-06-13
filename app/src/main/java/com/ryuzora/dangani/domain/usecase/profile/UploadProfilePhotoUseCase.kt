@@ -7,3 +7,4 @@ class UploadProfilePhotoUseCase(private val userRepository: UserRepository) {
         return userRepository.uploadProfilePhoto(userId, imageUri)
     }
 }
+

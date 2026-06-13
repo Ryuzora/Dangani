@@ -7,3 +7,4 @@ class SaveSearchHistoryUseCase(private val searchRepository: SearchRepository) {
         searchRepository.saveSearchQuery(userId, query)
     }
 }
+

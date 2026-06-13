@@ -19,3 +19,4 @@ class DanganiApplication : Application() {
             private set
     }
 }
+

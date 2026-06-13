@@ -75,3 +75,4 @@ fun Review.toFirestoreMap(): Map<String, Any?> = mapOf(
     "comment" to comment,
     "createdAt" to createdAt
 )
+

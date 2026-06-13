@@ -25,3 +25,4 @@ class RegisterUseCase(private val userRepository: UserRepository) {
         return userRepository.register(email, username, password)
     }
 }
+

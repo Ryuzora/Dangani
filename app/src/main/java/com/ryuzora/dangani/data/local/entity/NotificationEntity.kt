@@ -19,3 +19,4 @@ data class NotificationEntity(
     val isRead: Boolean = false,
     val createdAt: Long = System.currentTimeMillis()
 )
+

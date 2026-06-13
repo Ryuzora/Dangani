@@ -7,3 +7,4 @@ class MarkNotificationReadUseCase(private val notificationRepository: Notificati
         return notificationRepository.markAsRead(notificationId)
     }
 }
+

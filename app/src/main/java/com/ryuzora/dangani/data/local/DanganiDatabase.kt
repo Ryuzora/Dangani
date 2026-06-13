@@ -60,3 +60,4 @@ abstract class DanganiDatabase : RoomDatabase() {
         }
     }
 }
+

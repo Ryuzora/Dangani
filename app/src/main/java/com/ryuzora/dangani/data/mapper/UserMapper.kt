@@ -99,3 +99,4 @@ fun User.toFirestoreMap(): Map<String, Any?> = mapOf(
     "instagram" to instagram,
     "createdAt" to createdAt
 )
+

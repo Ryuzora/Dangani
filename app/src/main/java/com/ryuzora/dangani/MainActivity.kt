@@ -17,19 +17,26 @@ import com.ryuzora.dangani.data.remote.FirebaseAuthService
 import com.ryuzora.dangani.data.remote.FirestoreService
 import com.ryuzora.dangani.data.remote.FirebaseStorageService
 import com.ryuzora.dangani.data.repository.NotificationRepositoryImpl
-import com.ryuzora.dangani.presentation.navigation.BottomNavBar
-import com.ryuzora.dangani.presentation.navigation.DanganiNavGraph
-import com.ryuzora.dangani.presentation.navigation.Screen
+import com.ryuzora.dangani.presentation.view.navigation.BottomNavBar
+import com.ryuzora.dangani.presentation.view.navigation.DanganiNavGraph
+import com.ryuzora.dangani.presentation.view.navigation.Screen
 import com.ryuzora.dangani.ui.theme.DanganiTheme
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+
+import androidx.compose.runtime.collectAsState
+import com.ryuzora.dangani.ui.theme.ThemeManager
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val themeManager = ThemeManager.getInstance(this)
+        
         setContent {
-            DanganiTheme {
+            val isDarkMode by themeManager.isDarkMode.collectAsState()
+            
+            DanganiTheme(darkTheme = isDarkMode) {
                 DanganiApp()
             }
         }

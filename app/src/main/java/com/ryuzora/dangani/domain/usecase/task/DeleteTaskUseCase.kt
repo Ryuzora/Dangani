@@ -11,3 +11,4 @@ class DeleteTaskUseCase(private val taskRepository: TaskRepository) {
         return taskRepository.deleteTask(task.id)
     }
 }
+

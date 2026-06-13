@@ -9,3 +9,4 @@ class GetUserReviewsUseCase(private val searchRepository: SearchRepository) {
         return searchRepository.getReviewsForUser(userId)
     }
 }
+

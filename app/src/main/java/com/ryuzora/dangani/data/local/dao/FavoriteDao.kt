@@ -22,3 +22,4 @@ interface FavoriteDao {
     @Query("DELETE FROM favorites WHERE userId = :userId AND taskId = :taskId")
     suspend fun delete(userId: String, taskId: String)
 }
+

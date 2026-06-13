@@ -11,3 +11,4 @@ class UpdateTaskUseCase(private val taskRepository: TaskRepository) {
         return taskRepository.updateTask(task)
     }
 }
+

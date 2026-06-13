@@ -9,3 +9,4 @@ class GetApplicantsUseCase(private val taskRepository: TaskRepository) {
         return taskRepository.getApplicants(taskId)
     }
 }
+

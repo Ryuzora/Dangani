@@ -35,3 +35,17 @@ val DividerColor = Color(0xFFEEEEEE)
 // Notification
 val UnreadDot = Color(0xFFE53935)
 val NewBadgeGreen = Color(0xFF4CAF50)
+
+// --- Dark Mode Colors ---
+val BackgroundDark = Color(0xFF121212)
+val CardDark = Color(0xFF1E1E1E)
+val SurfaceDark = Color(0xFF2C2C2C)
+val TextPrimaryDark = Color(0xFFE0E0E0)
+val TextSecondaryDark = Color(0xFFA0A0A0)
+val TextHintDark = Color(0xFF757575)
+val DividerDark = Color(0xFF333333)
+val DanganiLightBlueDark = Color(0xFF1E3A5F)
+val TaskPointsLightGreenDark = Color(0xFF1B3B22)
+val TaskPointsGreenDark = Color(0xFF4CAF50)
+val VerificationBadgeBgDark = Color(0xFF1B4D2E)
+val VerificationBadgeTextDark = Color(0xFF69F0AE)

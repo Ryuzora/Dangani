@@ -20,3 +20,4 @@ data class UserEntity(
     val instagram: String = "",
     val createdAt: Long = System.currentTimeMillis()
 )
+

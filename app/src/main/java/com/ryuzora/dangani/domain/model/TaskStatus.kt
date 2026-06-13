@@ -7,3 +7,4 @@ enum class TaskStatus(val displayName: String) {
     REVISION("Revision"),
     ACCEPTED("Accepted")
 }
+

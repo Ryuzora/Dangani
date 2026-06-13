@@ -11,3 +11,4 @@ class UpdateProfileUseCase(private val userRepository: UserRepository) {
         return userRepository.updateProfile(user)
     }
 }
+

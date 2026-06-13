@@ -15,3 +15,4 @@ data class User(
     val instagram: String = "",
     val createdAt: Long = System.currentTimeMillis()
 )
+

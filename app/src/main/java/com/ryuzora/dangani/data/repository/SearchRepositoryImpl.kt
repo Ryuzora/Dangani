@@ -134,3 +134,4 @@ class SearchRepositoryImpl(
             .sortedByDescending { it.createdAt }
     }
 }
+

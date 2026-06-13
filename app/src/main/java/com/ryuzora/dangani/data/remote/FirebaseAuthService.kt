@@ -44,3 +44,4 @@ class FirebaseAuthService {
 
     fun getCurrentUserId(): String? = auth.currentUser?.uid
 }
+

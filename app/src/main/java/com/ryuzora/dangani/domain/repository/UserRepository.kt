@@ -13,3 +13,4 @@ interface UserRepository {
     suspend fun updateProfile(user: User): Result<Unit>
     suspend fun uploadProfilePhoto(userId: String, imageUri: String): Result<String>
 }
+

@@ -30,3 +30,4 @@ interface TaskRepository {
     suspend fun acceptWork(taskId: String): Result<Unit>
     suspend fun requestRevision(taskId: String): Result<Unit>
 }
+

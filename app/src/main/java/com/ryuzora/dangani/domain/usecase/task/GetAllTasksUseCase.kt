@@ -9,3 +9,4 @@ class GetAllTasksUseCase(private val taskRepository: TaskRepository) {
         return taskRepository.getAllTasks()
     }
 }
+
