@@ -58,7 +58,7 @@ fun RegisterScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp)
             .imePadding(),
@@ -239,7 +239,7 @@ fun RegisterScreen(
             text = buildAnnotatedString {
                 append("Sudah punya akun? ")
                 withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)) {
-                    append("Sign in here")
+                    append("Masuk di sini")
                 }
             },
             style = MaterialTheme.typography.bodyMedium,

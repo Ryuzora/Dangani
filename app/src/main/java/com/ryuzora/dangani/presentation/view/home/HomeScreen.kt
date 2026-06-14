@@ -87,14 +87,6 @@ fun HomeScreen(
                     ),
                     color = MaterialTheme.colorScheme.primary
                 )
-                IconButton(onClick = { /* navigate to notifications */ }) {
-                    Icon(
-                        imageVector = Icons.Outlined.Notifications,
-                        contentDescription = "Notifications",
-                        tint = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier.size(26.dp)
-                    )
-                }
             }
 
             // Search Bar

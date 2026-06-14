@@ -136,49 +136,7 @@ fun MyTasksScreen(
                         )
                     }
                     
-                    if (!isRequesterView) {
-                        item {
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(24.dp))
-                                    .background(
-                                        androidx.compose.ui.graphics.Brush.linearGradient(
-                                            colors = listOf(
-                                                androidx.compose.ui.graphics.Color(0xFF003882),
-                                                androidx.compose.ui.graphics.Color(0xFF1964D3)
-                                            ),
-                                            start = androidx.compose.ui.geometry.Offset(0f, Float.POSITIVE_INFINITY),
-                                            end = androidx.compose.ui.geometry.Offset(Float.POSITIVE_INFINITY, 0f)
-                                        )
-                                    )
-                                    .padding(vertical = 32.dp, horizontal = 24.dp)
-                            ) {
-                                Column {
-                                    Text(
-                                        text = "STATISTIK MINGGUAN",
-                                        style = MaterialTheme.typography.labelSmall.copy(
-                                            letterSpacing = 1.5.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                            fontSize = 10.sp
-                                        ),
-                                        color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.8f)
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text(
-                                        text = "Kamu telah menyelesaikan...",
-                                        style = MaterialTheme.typography.titleLarge.copy(
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 20.sp
-                                        ),
-                                        color = androidx.compose.ui.graphics.Color.White
-                                    )
-                                    Spacer(modifier = Modifier.height(24.dp))
-                                }
-                            }
-                        }
-                    }
+
                     
                     item {
                         Spacer(modifier = Modifier.height(80.dp)) // Padding for bottom nav

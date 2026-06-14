@@ -69,7 +69,7 @@ fun TaskDetailScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
-        containerColor = BackgroundGray,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
                 title = {
@@ -89,8 +89,8 @@ fun TaskDetailScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = BackgroundGray,
-                    titleContentColor = TextPrimary
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground
                 )
             )
         }
@@ -103,7 +103,7 @@ fun TaskDetailScreen(
                         .padding(innerPadding),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = DanganiBlue)
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 }
             }
             uiState.error != null && uiState.task == null -> {
@@ -116,7 +116,7 @@ fun TaskDetailScreen(
                     Text(
                         text = uiState.error ?: "Terjadi kesalahan",
                         style = MaterialTheme.typography.bodyLarge,
-                        color = ErrorRed
+                        color = MaterialTheme.colorScheme.error
                     )
                 }
             }
@@ -152,7 +152,7 @@ fun TaskDetailScreen(
                     Text(
                         text = "Posted ${task.timeAgo}",
                         style = MaterialTheme.typography.bodySmall,
-                        color = TextSecondary
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
                     Spacer(modifier = Modifier.height(14.dp))
@@ -163,7 +163,7 @@ fun TaskDetailScreen(
                         style = MaterialTheme.typography.headlineSmall.copy(
                             fontWeight = FontWeight.Bold
                         ),
-                        color = TextPrimary
+                        color = MaterialTheme.colorScheme.onBackground
                     )
 
                     Spacer(modifier = Modifier.height(10.dp))
@@ -172,7 +172,7 @@ fun TaskDetailScreen(
                     Text(
                         text = task.description,
                         style = MaterialTheme.typography.bodyLarge,
-                        color = TextSecondary
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
                     Spacer(modifier = Modifier.height(28.dp))
@@ -192,7 +192,7 @@ fun TaskDetailScreen(
                             style = MaterialTheme.typography.labelMedium.copy(
                                 fontWeight = FontWeight.SemiBold
                             ),
-                            color = TextSecondary
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
 
@@ -243,7 +243,7 @@ fun TaskDetailScreen(
                         Text(
                             text = uiState.error!!,
                             style = MaterialTheme.typography.bodySmall,
-                            color = ErrorRed
+                            color = MaterialTheme.colorScheme.error
                         )
                     }
 

@@ -57,7 +57,7 @@ fun LoginScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp)
             .imePadding(),
@@ -216,7 +216,7 @@ fun LoginScreen(
             text = buildAnnotatedString {
                 append("Belum punya akun? ")
                 withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)) {
-                    append("Sign up here")
+                    append("Daftar di sini")
                 }
             },
             style = MaterialTheme.typography.bodyMedium,

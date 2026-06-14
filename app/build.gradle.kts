@@ -75,8 +75,9 @@ android {
 
 dependencies {
     // Core
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation("androidx.core:core-ktx:1.13.1")
+    implementation("androidx.core:core-splashscreen:1.0.1")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.1")
     implementation(libs.androidx.activity.compose)
 
     // Compose

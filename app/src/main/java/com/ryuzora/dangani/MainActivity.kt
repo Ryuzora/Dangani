@@ -30,6 +30,8 @@ import kotlinx.coroutines.launch
 import androidx.compose.runtime.collectAsState
 import com.ryuzora.dangani.ui.theme.ThemeManager
 
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+
 class MainActivity : ComponentActivity() {
 
     private val requestPermissionLauncher = registerForActivityResult(
@@ -41,6 +43,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val themeManager = ThemeManager.getInstance(this)
