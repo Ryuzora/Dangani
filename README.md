@@ -78,8 +78,8 @@ Berikut adalah panduan menjalankan aplikasi, baik jika kamu hanya ingin meng-ins
 
 ### 📱 Sebagai Pengguna
 Jika kamu hanya ingin memakai aplikasi Dangani di HP kamu:
-1. **Dapatkan File APK**: Unduh file APK versi terbaru dari tab [Releases](https://github.com/username-kamu/Dangani/releases) 
-2. **Install di HP Android**: Buka file `app-debug.apk` atau `app-release.apk` tersebut di HP kamu.
+1. **Dapatkan File APK**: Unduh file APK versi terbaru dari page [Release](https://github.com/Ryuzora/Dangani/releases/tag/v1.0) pada halaman GitHub ini, atau minta langsung dari *developer*.
+2. **Install di HP Android**: Download dan install file `Dangani.apk` tersebut di HP.
 3. **Izinkan Instalasi**: Jika muncul peringatan, pastikan kamu telah memberikan izin *"Install unknown apps"* (Instal aplikasi dari sumber tidak dikenal) pada pengaturan keamanan Android-mu.
 4. Selesai! Aplikasi Dangani siap digunakan.
 
@@ -96,7 +96,7 @@ Jika kamu ingin ikut mengembangkan aplikasi atau menjalankan *project* ini melal
 #### 2. Clone Repositori
 Buka Terminal / Command Prompt dan jalankan perintah:
 ```bash
-git clone https://github.com/username-kamu/Dangani.git
+git clone https://github.com/Ryuzora/Dangani.git
 cd Dangani
 ```
 
